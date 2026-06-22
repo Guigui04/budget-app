@@ -19,6 +19,8 @@ const AccountsPage = lazy(() => import('@/features/accounts/AccountsPage').then(
 const AlertsPage = lazy(() => import('@/features/alerts/AlertsPage').then((m) => ({ default: m.AlertsPage })))
 const SettingsPage = lazy(() => import('@/features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })))
 const OnboardingPage = lazy(() => import('@/features/onboarding/OnboardingPage').then((m) => ({ default: m.OnboardingPage })))
+const PrivacyPage = lazy(() => import('@/features/legal/PrivacyPage').then((m) => ({ default: m.PrivacyPage })))
+const TermsPage = lazy(() => import('@/features/legal/TermsPage').then((m) => ({ default: m.TermsPage })))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -62,6 +64,8 @@ export default function App() {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/bienvenue" element={<OnboardingRoute />} />
+            <Route path="/confidentialite" element={<PrivacyPage />} />
+            <Route path="/conditions" element={<TermsPage />} />
             <Route element={<Protected />}>
               <Route path="/" element={<DashboardPage />} />
               <Route path="/operations" element={<TransactionsPage />} />

@@ -1767,3 +1767,73 @@
 .login-switch-btn:hover {
   text-decoration: underline;
 }
+
+/* Pages légales (confidentialité / conditions) — publiques */
+.legal {
+  min-height: 100dvh;
+  padding: calc(var(--safe-top) + 32px) 20px calc(var(--safe-bottom) + 48px);
+  display: flex;
+  justify-content: center;
+}
+
+.legal-inner {
+  width: 100%;
+  max-width: 640px;
+}
+
+.legal-back {
+  display: inline-block;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.legal-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  margin-bottom: 12px;
+}
+
+.legal h1 {
+  font-family: 'Clash Display', system-ui, sans-serif;
+  font-size: 1.8rem;
+  margin: 0 0 4px;
+}
+
+.legal-meta {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin: 0 0 24px;
+}
+
+.legal h2 {
+  font-size: 1.05rem;
+  margin: 26px 0 8px;
+}
+
+.legal p,
+.legal li {
+  color: var(--text);
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.legal ul {
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.legal a {
+  color: var(--accent-text);
+  font-weight: 600;
+}

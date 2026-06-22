@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, Link } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -125,7 +125,11 @@ export function LoginPage() {
         )}
       </motion.div>
 
-      <p className="login-foot">Distribué en privé · usage strictement personnel</p>
+      <p className="login-foot">
+        Distribué en privé · usage strictement personnel
+        <br />
+        <Link to="/confidentialite">Confidentialité</Link> · <Link to="/conditions">Conditions</Link>
+      </p>
     </div>
   )
 }
