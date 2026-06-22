@@ -1977,3 +1977,141 @@
   color: var(--accent-text);
   font-size: 0.78rem;
 }
+
+/* ============ Dashboard hero v2 (carte relevé) ============ */
+.hero-amount {
+  margin: 14px 0 8px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 3.4rem;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.hero-amount-cents {
+  font-size: 1.5rem;
+  font-weight: 700;
+  opacity: 0.8;
+  margin-left: 2px;
+}
+
+.hero-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: var(--r-full);
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: var(--hero-ink);
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.hero-flow {
+  margin-top: 20px;
+}
+
+.hero-flow-bar {
+  height: 8px;
+  border-radius: var(--r-full);
+  background: rgba(255, 255, 255, 0.22);
+  overflow: hidden;
+}
+
+.hero-flow-in {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-full);
+  background: #ffffff;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+  transition: width var(--dur-slow) var(--ease-spring);
+}
+
+.hero-flow-legend {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-top: 10px;
+}
+
+.hero-flow-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--hero-sub);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.hero-flow-item b {
+  color: var(--hero-ink);
+  margin-left: 2px;
+}
+
+.hero-flow-item.out {
+  flex-direction: row-reverse;
+}
+
+/* ============ Quick actions (boutons circulaires) ============ */
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+
+.qa {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 2px;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+  transition: transform var(--dur) var(--ease-spring);
+}
+
+.qa:active { transform: scale(var(--press-scale)); }
+.qa:disabled { opacity: 0.55; }
+
+.qa-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--r-lg);
+  color: var(--accent-text);
+  background: var(--glass);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  transition: background var(--dur-fast), color var(--dur-fast), box-shadow var(--dur-fast);
+}
+
+.qa:hover .qa-icon {
+  background: var(--accent-soft);
+  box-shadow: var(--shadow-md);
+}
+
+.qa-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-full);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 0.66rem;
+  font-weight: 800;
+  border: 2px solid var(--bg);
+}
+
+.qa-label { white-space: nowrap; }

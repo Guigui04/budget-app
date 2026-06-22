@@ -30,6 +30,14 @@ export function formatMoneyCompact(amount: number, currency = DEFAULT_CURRENCY):
   return moneyFormatter(currency, true).format(amount)
 }
 
+/** Décompose un montant pour un affichage « split » (entier grand, centimes petits). */
+export function formatBalanceParts(amount: number): { sign: string; whole: string; cents: string } {
+  const totalCents = Math.round(Math.abs(amount) * 100)
+  const whole = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(Math.trunc(totalCents / 100))
+  const cents = (totalCents % 100).toString().padStart(2, '0')
+  return { sign: amount < 0 ? '-' : '', whole, cents }
+}
+
 /** Signed amount with explicit + for income, used in transaction rows. */
 export function formatSigned(amount: number, currency = DEFAULT_CURRENCY): string {
   const sign = amount > 0 ? '+' : ''
