@@ -10,16 +10,16 @@ interface Rule {
 }
 
 const KEYWORD_MAP: { keywords: string[]; category: string }[] = [
-  { keywords: ['carrefour', 'leclerc', 'auchan', 'monoprix', 'lidl', 'biocoop', 'intermarche', 'super u', 'casino'], category: 'Courses' },
-  { keywords: ['restaurant', 'bistrot', 'sushi', 'mcdo', 'burger', 'boulangerie', 'uber eats', 'deliveroo', 'pizza'], category: 'Restaurants' },
-  { keywords: ['total', 'esso', 'sncf', 'uber', 'ratp', 'bolt', 'station', 'autoroute', 'parking', 'essence'], category: 'Transport' },
-  { keywords: ['loyer', 'sci', 'foncia', 'assurance', 'maif', 'macif'], category: 'Logement' },
-  { keywords: ['edf', 'engie', 'total energies', 'electricite', 'gaz', 'eau'], category: 'Énergie' },
-  { keywords: ['netflix', 'spotify', 'apple.com', 'icloud', 'amazon prime', 'disney', 'canal', 'youtube premium'], category: 'Abonnements' },
-  { keywords: ['fnac', 'cinema', 'pathe', 'ugc', 'basic fit', 'fitness', 'steam', 'playstation'], category: 'Loisirs' },
-  { keywords: ['pharmacie', 'doctolib', 'medecin', 'hopital', 'dentiste', 'optique'], category: 'Santé' },
-  { keywords: ['zara', 'h&m', 'decathlon', 'darty', 'fnac', 'amazon', 'zalando', 'sephora'], category: 'Shopping' },
-  { keywords: ['hotel', 'airbnb', 'booking', 'ryanair', 'air france', 'easyjet'], category: 'Voyages' },
+  { keywords: ['carrefour', 'leclerc', 'auchan', 'monoprix', 'lidl', 'biocoop', 'intermarche', 'super u', 'hyper u', 'casino', 'franprix', 'naturalia', 'grand frais', 'aldi', 'cora', 'leader price', 'picard', 'metro', 'supermarche', 'epicerie', 'primeur'], category: 'Courses' },
+  { keywords: ['restaurant', 'bistrot', 'brasserie', 'sushi', 'mcdo', 'mcdonald', 'kfc', 'subway', 'burger', 'boulangerie', 'patisserie', 'uber eats', 'deliveroo', 'just eat', 'pizza', 'pizzeria', 'kebab', 'tacos', 'starbucks', 'brioche', 'flunch', 'buffalo grill', 'creperie', 'traiteur', 'mie', 'nosh'], category: 'Restaurants' },
+  { keywords: ['total', 'esso', 'sncf', 'uber', 'ratp', 'bolt', 'station', 'autoroute', 'parking', 'essence', 'shell', 'avia', 'peage', 'vinci', 'sanef', 'aprr', 'velib', 'lime', 'blablacar', 'flixbus', 'semepa', 'tisseo', 'carburant'], category: 'Transport' },
+  { keywords: ['loyer', 'sci', 'foncia', 'nexity', 'assurance', 'maif', 'macif', 'matmut', 'gmf', 'axa', 'allianz', 'syndic', 'copropriete'], category: 'Logement' },
+  { keywords: ['edf', 'engie', 'total energies', 'electricite', 'gaz', 'veolia', 'saur', 'suez', 'enedis', 'eaux', 'service des eaux'], category: 'Énergie' },
+  { keywords: ['netflix', 'spotify', 'deezer', 'apple.com', 'apple com', 'itunes', 'icloud', 'amazon prime', 'prime video', 'disney', 'canal', 'youtube', 'audible', 'free', 'orange', 'sfr', 'bouygues', 'sosh', 'chatgpt', 'openai', 'anthropic', 'claude', 'github', 'adobe', 'microsoft', 'dropbox', 'notion'], category: 'Abonnements' },
+  { keywords: ['cinema', 'pathe', 'gaumont', 'ugc', 'mk2', 'theatre', 'basic fit', 'basic-fit', 'fitness', 'neoness', 'steam', 'playstation', 'nintendo', 'xbox', 'concert', 'musee', 'piscine', 'bowling'], category: 'Loisirs' },
+  { keywords: ['pharmacie', 'doctolib', 'medecin', 'hopital', 'clinique', 'dentiste', 'opticien', 'optique', 'laboratoire', 'kine', 'osteopathe', 'mutuelle', 'ameli', 'cpam', 'labo'], category: 'Santé' },
+  { keywords: ['zara', 'h&m', 'decathlon', 'darty', 'boulanger', 'fnac', 'amazon', 'zalando', 'sephora', 'leroy merlin', 'castorama', 'ikea', 'action', 'gifi', 'primark', 'uniqlo', 'kiabi', 'cdiscount', 'veepee', 'vinted', 'shein', 'nike', 'adidas', 'jardiland'], category: 'Shopping' },
+  { keywords: ['hotel', 'airbnb', 'booking', 'ryanair', 'air france', 'easyjet', 'transavia', 'volotea', 'expedia', 'abritel', 'hertz', 'europcar', 'sixt', 'trainline', 'oui sncf', 'sncf connect', 'camping'], category: 'Voyages' },
   { keywords: ['salaire', 'vir salaire', 'remuneration', 'traitement paie'], category: 'Salaire' },
 ]
 
@@ -52,15 +52,22 @@ export function categorizeLabel(label: string, rules: Rule[]): string | null {
   return null
 }
 
-/** Nettoie un libellé brut bancaire en quelque chose de lisible. */
+/**
+ * Nettoie un libellé brut bancaire pour ne garder que le marchand.
+ * Retire les mots techniques, le jeton de carte (X3085), les dates (JJ/MM),
+ * les longs nombres et la ponctuation parasite. Indispensable pour que les
+ * règles « toujours classer X » généralisent d'une opération à l'autre.
+ */
 export function cleanLabel(raw: string): string {
-  return raw
-    .replace(/\bCB\b|\bPAIEMENT\b|\bCARTE\b|\bVIR\b|\bPRLV\b/gi, '')
-    .replace(/\d{2}\/\d{2}\/\d{2,4}/g, '')
-    .replace(/\d{6,}/g, '')
-    .replace(/\*+/g, ' ')
+  const cleaned = raw
+    .replace(/\b(CB|PAIEMENT|PAIE|PAR|CARTE|ACHAT|RETRAIT|VIR(EMENT)?|PRLV|PRELEVEMENT|FACTURE|REMISE|COMMERCE|ELECTRONIQUE)\b/gi, ' ')
+    .replace(/\bX\d{2,}\b/gi, ' ')                       // jeton carte ex. X3085
+    .replace(/\b\d{2}[\/.]\d{2}([\/.]\d{2,4})?\b/g, ' ') // dates JJ/MM(/AAAA)
+    .replace(/\d{5,}/g, ' ')                             // longs nombres
+    .replace(/[*#]+/g, ' ')
     .replace(/\s{2,}/g, ' ')
     .trim()
     .replace(/\b\w/g, (c) => c.toUpperCase())
-    .slice(0, 60) || raw.slice(0, 60)
+    .slice(0, 48)
+  return cleaned || raw.slice(0, 48)
 }

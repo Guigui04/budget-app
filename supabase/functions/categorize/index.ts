@@ -5,7 +5,7 @@
  */
 import { json, preflight } from '../_shared/cors.ts'
 import { adminClient, callerHousehold } from '../_shared/supabaseAdmin.ts'
-import { categorizeLabel } from '../_shared/categorize.ts'
+import { categorizeLabel, cleanLabel } from '../_shared/categorize.ts'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return preflight()
@@ -25,17 +25,24 @@ Deno.serve(async (req) => {
   ])
 
   const catByName = new Map((categories ?? []).map((c) => [c.name, c.id]))
-  let updated = 0
+  let categorized = 0
 
   for (const t of txns ?? []) {
-    const result = categorizeLabel(t.raw_label, rules ?? [])
-    if (!result) continue
-    const id = result.startsWith('name:') ? catByName.get(result.slice(5)) : result
-    const source = result.startsWith('name:') ? 'auto' : 'rule'
-    if (!id) continue
-    await db.from('transactions').update({ category_id: id, category_source: source }).eq('id', t.id)
-    updated++
+    // Re-nettoie le libellé (marchand) ET tente la catégorisation dessus.
+    const clean = cleanLabel(t.raw_label)
+    const patch: Record<string, unknown> = { clean_label: clean }
+
+    const result = categorizeLabel(clean, rules ?? [])
+    if (result) {
+      const id = result.startsWith('name:') ? catByName.get(result.slice(5)) : result
+      if (id) {
+        patch.category_id = id
+        patch.category_source = result.startsWith('name:') ? 'auto' : 'rule'
+        categorized++
+      }
+    }
+    await db.from('transactions').update(patch).eq('id', t.id)
   }
 
-  return json({ updated })
+  return json({ processed: (txns ?? []).length, categorized })
 })

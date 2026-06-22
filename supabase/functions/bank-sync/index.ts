@@ -88,7 +88,8 @@ Deno.serve(async (req) => {
 
         const txns = await provider.getTransactions(conn.external_session_id, acc.externalAccountId)
         for (const t of txns) {
-          const resolved = resolveCategory(categorizeLabel(t.rawLabel, rules ?? []), catByName)
+          const clean = cleanLabel(t.rawLabel)
+          const resolved = resolveCategory(categorizeLabel(clean, rules ?? []), catByName)
           const { error, count } = await db.from('transactions').upsert(
             {
               account_id: accountRow.id,
@@ -98,7 +99,7 @@ Deno.serve(async (req) => {
               amount: t.amount,
               currency: t.currency,
               raw_label: t.rawLabel,
-              clean_label: cleanLabel(t.rawLabel),
+              clean_label: clean,
               category_id: resolved.id,
               category_source: resolved.source,
             },
