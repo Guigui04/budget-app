@@ -18,6 +18,13 @@ export function TransactionsPage() {
   const [search, setSearch] = useState('')
   const [accountId, setAccountId] = useState<string>('all')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  // Rendu incrémental : on n'affiche pas 600+ lignes d'un coup (fluidité).
+  const PAGE = 50
+  const [visibleCount, setVisibleCount] = useState(PAGE)
+
+  function changeFilter(f: Filter) { setFilter(f); setVisibleCount(PAGE) }
+  function changeSearch(v: string) { setSearch(v); setVisibleCount(PAGE) }
+  function changeAccount(v: string) { setAccountId(v); setVisibleCount(PAGE) }
 
   const catMap = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories])
 
@@ -39,14 +46,17 @@ export function TransactionsPage() {
       .sort((a, b) => (a.bookingDate < b.bookingDate ? 1 : -1))
   }, [transactions, filter, search, accountId])
 
+  const visible = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount])
+  const remaining = filtered.length - visible.length
+
   const groups = useMemo(() => {
     const map = new Map<string, Transaction[]>()
-    for (const t of filtered) {
+    for (const t of visible) {
       const key = t.bookingDate
       map.set(key, [...(map.get(key) ?? []), t])
     }
     return [...map.entries()]
-  }, [filtered])
+  }, [visible])
 
   const todoCount = transactions.filter((t) => t.categoryId === null).length
 
@@ -57,10 +67,10 @@ export function TransactionsPage() {
         <input
           placeholder="Rechercher un marchand…"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => changeSearch(e.target.value)}
         />
         {accounts.length > 0 && (
-          <select className="acct-select" value={accountId} onChange={(e) => setAccountId(e.target.value)} aria-label="Compte">
+          <select className="acct-select" value={accountId} onChange={(e) => changeAccount(e.target.value)} aria-label="Compte">
             <option value="all">Tous</option>
             {accounts.map((a) => (
               <option key={a.id} value={a.id}>{a.name}</option>
@@ -72,7 +82,7 @@ export function TransactionsPage() {
       <div className="filter-row">
         <Segmented
           value={filter}
-          onChange={setFilter}
+          onChange={changeFilter}
           options={[
             { value: 'all', label: 'Tout' },
             { value: 'expense', label: 'Dépenses' },
@@ -101,6 +111,12 @@ export function TransactionsPage() {
             </div>
           </section>
         ))
+      )}
+
+      {remaining > 0 && (
+        <button className="load-more" onClick={() => setVisibleCount((c) => c + PAGE)}>
+          Voir plus <span className="load-more-count">{remaining}</span>
+        </button>
       )}
 
       <TransactionDetailSheet txn={selected} categories={categories} onClose={() => setSelectedId(null)} />
