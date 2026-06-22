@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Plus, Wallet } from 'lucide-react'
 import { useBudgets, useCategories, useTransactions } from '@/data/hooks'
 import { buildEnvelopes, monthSpending } from '@/data/selectors'
+import { useSession } from '@/store/session'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { Button } from '@/components/ui/Button'
@@ -14,8 +15,17 @@ export function BudgetsPage() {
   const { data: budgets = [] } = useBudgets()
   const { data: categories = [] } = useCategories()
   const { data: transactions = [] } = useTransactions()
+  const household = useSession((s) => s.household)
+  const updateIncome = useSession((s) => s.updateHouseholdIncome)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editing, setEditing] = useState<BudgetEnvelope | null>(null)
+
+  const income = household?.monthlyIncome ?? 0
+
+  function saveIncome(raw: string) {
+    const value = Number(raw.replace(',', '.')) || 0
+    if (value !== income) void updateIncome(value)
+  }
 
   const envelopes = useMemo(
     () => buildEnvelopes(budgets, categories, transactions),
@@ -26,6 +36,8 @@ export function BudgetsPage() {
     const spent = envelopes.reduce((s, e) => s + e.spent, 0)
     return { allocated, spent, spending: monthSpending(transactions) }
   }, [budgets, envelopes, transactions])
+
+  const projectedRemaining = income - totals.allocated
 
   const available = categories.filter(
     (c) => !budgets.some((b) => b.categoryId === c.id) && c.name !== 'Salaire' && c.name !== 'Épargne',
@@ -42,17 +54,45 @@ export function BudgetsPage() {
 
   return (
     <div className="page">
-      <section className="card card-pad rise budget-summary">
-        <span className="section-label">{formatMonth(new Date().toISOString())}</span>
-        <div className="budget-summary-amount num">
-          {formatMoney(totals.spent)}
-          <span className="budget-summary-of"> / {formatMoneyCompact(totals.allocated)}</span>
+      <section className="card card-pad rise budget-forecast">
+        <span className="section-label">Prévisionnel · {formatMonth(new Date().toISOString())}</span>
+
+        <div className="forecast-line">
+          <label htmlFor="income">Revenu du mois</label>
+          <div className="forecast-income">
+            <input
+              id="income"
+              key={income}
+              type="text"
+              inputMode="decimal"
+              className="forecast-income-input num"
+              placeholder="0"
+              defaultValue={income ? String(income) : ''}
+              onInput={(e) => { e.currentTarget.value = e.currentTarget.value.replace(/[^0-9.,]/g, '') }}
+              onBlur={(e) => saveIncome(e.currentTarget.value)}
+              onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+            />
+            <span className="forecast-euro">€</span>
+          </div>
         </div>
-        <ProgressBar ratio={totals.allocated > 0 ? totals.spent / totals.allocated : 0} semantic />
+
+        <div className="forecast-line">
+          <span>Budgets alloués</span>
+          <span className="num forecast-neg">− {formatMoney(totals.allocated)}</span>
+        </div>
+
+        <div className="forecast-divider" />
+
+        <div className="forecast-result">
+          <span>Reste prévu en fin de mois</span>
+          <span className={`num ${projectedRemaining >= 0 ? 'forecast-pos' : 'forecast-over'}`}>
+            {formatMoney(projectedRemaining)}
+          </span>
+        </div>
+
         <p className="budget-summary-hint">
-          {totals.allocated - totals.spent >= 0
-            ? `${formatMoney(totals.allocated - totals.spent)} restants dans vos enveloppes`
-            : `${formatMoney(totals.spent - totals.allocated)} au-dessus du total alloué`}
+          Déjà dépensé : <span className="num">{formatMoney(totals.spent)}</span> sur{' '}
+          <span className="num">{formatMoneyCompact(totals.allocated)}</span> budgétés
         </p>
       </section>
 

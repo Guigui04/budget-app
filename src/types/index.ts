@@ -9,6 +9,8 @@ export interface Household {
   id: UUID
   name: string
   createdAt: string
+  /** Revenu mensuel prévu (salaire) du foyer, pour le budget prévisionnel. */
+  monthlyIncome: number
 }
 
 export interface UserProfile {

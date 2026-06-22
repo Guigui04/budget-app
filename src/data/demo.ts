@@ -22,6 +22,7 @@ export const demoHousehold: Household = {
   id: HOUSEHOLD_ID,
   name: 'Foyer Guillaume & Maëva',
   createdAt: '2025-09-01T10:00:00Z',
+  monthlyIncome: 3200,
 }
 
 export const demoUsers: UserProfile[] = [

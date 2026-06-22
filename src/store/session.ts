@@ -17,6 +17,7 @@ interface HouseholdRow {
   id: string
   name: string
   created_at: string
+  monthly_income: number | null
 }
 
 interface SessionState {
@@ -31,6 +32,7 @@ interface SessionState {
   signOut: () => Promise<void>
   createHousehold: (name: string) => Promise<string>
   joinHousehold: (code: string) => Promise<void>
+  updateHouseholdIncome: (income: number) => Promise<void>
 }
 
 function asMessage(error: unknown): string {
@@ -52,6 +54,7 @@ function mapHousehold(row: HouseholdRow): Household {
     id: row.id,
     name: row.name,
     createdAt: row.created_at,
+    monthlyIncome: Number(row.monthly_income ?? 0),
   }
 }
 
@@ -85,7 +88,7 @@ async function loadLiveSession(): Promise<Pick<SessionState, 'status' | 'user' |
 
   const { data: household, error: householdError } = await supabase
     .from('households')
-    .select('id, name, created_at')
+    .select('id, name, created_at, monthly_income')
     .eq('id', user.householdId)
     .single<HouseholdRow>()
 
@@ -189,5 +192,25 @@ export const useSession = create<SessionState>((set) => ({
     const { error } = await supabase.rpc('join_household', { p_code: cleanCode })
     if (error) throw new Error(error.message)
     await useSession.getState().initialize()
+  },
+
+  updateHouseholdIncome: async (income) => {
+    const value = Math.max(0, Math.round(income * 100) / 100)
+    const current = useSession.getState().household
+    if (!current) throw new Error('Foyer introuvable.')
+
+    // Mise à jour optimiste (le foyer vit dans le store, pas dans React Query).
+    set({ household: { ...current, monthlyIncome: value } })
+
+    if (!isSupabaseConfigured || !supabase) return
+
+    const { error } = await supabase
+      .from('households')
+      .update({ monthly_income: value })
+      .eq('id', current.id)
+    if (error) {
+      set({ household: current }) // rollback
+      throw new Error(error.message)
+    }
   },
 }))

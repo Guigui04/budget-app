@@ -62,7 +62,7 @@ export function cleanLabel(raw: string): string {
   const cleaned = raw
     .replace(/\b(CB|PAIEMENT|PAIE|PAR|CARTE|ACHAT|RETRAIT|VIR(EMENT)?|PRLV|PRELEVEMENT|FACTURE|REMISE|COMMERCE|ELECTRONIQUE)\b/gi, ' ')
     .replace(/\bX\d{2,}\b/gi, ' ')                       // jeton carte ex. X3085
-    .replace(/\b\d{2}[\/.]\d{2}([\/.]\d{2,4})?\b/g, ' ') // dates JJ/MM(/AAAA)
+    .replace(/\b\d{2}[/.]\d{2}([/.]\d{2,4})?\b/g, ' ') // dates JJ/MM(/AAAA)
     .replace(/\d{5,}/g, ' ')                             // longs nombres
     .replace(/[*#]+/g, ' ')
     .replace(/\s{2,}/g, ' ')

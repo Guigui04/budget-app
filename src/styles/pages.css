@@ -1872,3 +1872,78 @@
   margin-left: 2px;
   opacity: 0.6;
 }
+
+/* Carte budget prévisionnelle (revenu − budgets = reste prévu) */
+.budget-forecast {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.forecast-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.98rem;
+}
+
+.forecast-line label {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.forecast-income {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--accent-soft);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px 10px;
+}
+
+.forecast-income-input {
+  width: 90px;
+  border: none;
+  background: transparent;
+  text-align: right;
+  font: inherit;
+  font-weight: 700;
+  color: var(--text);
+  outline: none;
+}
+
+.forecast-euro {
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.forecast-neg {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.forecast-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+.forecast-result {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.forecast-result > span:first-child {
+  font-weight: 700;
+}
+
+.forecast-result .num {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.forecast-pos { color: var(--positive); }
+.forecast-over { color: var(--negative); }
