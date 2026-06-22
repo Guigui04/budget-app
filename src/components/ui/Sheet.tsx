@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 
 interface SheetProps {
   open: boolean
@@ -21,7 +22,11 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
     }
   }, [open, onClose])
 
-  return (
+  // Rendu dans <body> via portail : indispensable pour que le `position: fixed`
+  // du backdrop soit relatif au viewport, et NON à un ancêtre qui porte un
+  // `filter`/`transform` (la coque de page animée) — sinon la fiche se retrouve
+  // positionnée en bas du contenu défilable, hors écran sur les pages longues.
+  return createPortal(
     <AnimatePresence>
       {open && (
         <motion.div
@@ -48,6 +53,7 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   )
 }
