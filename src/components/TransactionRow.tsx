@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { ChevronRight } from 'lucide-react'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { formatSigned, formatDateShort } from '@/lib/format'
 import type { Category, Transaction } from '@/types'
@@ -29,6 +30,7 @@ export function TransactionRow({ txn, category, onClick, showDate = true }: Tran
       <span className={clsx('txn-amount amount', income ? 'amount-pos' : 'amount-neg')}>
         {formatSigned(txn.amount, txn.currency)}
       </span>
+      {onClick && <ChevronRight size={16} className="txn-chevron" aria-hidden="true" />}
     </button>
   )
 }

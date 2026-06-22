@@ -29,12 +29,7 @@ export function TransactionDetailSheet({ txn, categories, onClose }: Props) {
         <div className={`detail-amount amount ${txn.amount > 0 ? 'amount-pos' : ''}`}>{formatSigned(txn.amount, txn.currency)}</div>
       </div>
 
-      <div className="detail-raw">
-        <span className="section-label">Libellé brut</span>
-        <p>{txn.rawLabel}</p>
-      </div>
-
-      <span className="section-label" style={{ display: 'block', marginBottom: 10 }}>Catégorie</span>
+      <span className="section-label" style={{ display: 'block', marginBottom: 10 }}>Choisir une catégorie</span>
       <div className="cat-grid">
         {categories.map((c) => (
           <button
@@ -61,6 +56,11 @@ export function TransactionDetailSheet({ txn, categories, onClose }: Props) {
           Toujours classer « {txn.cleanLabel} » en {current.name}
         </Button>
       )}
+
+      <div className="detail-raw" style={{ marginTop: 18 }}>
+        <span className="section-label">Libellé brut</span>
+        <p>{txn.rawLabel}</p>
+      </div>
     </Sheet>
   )
 }

@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowUpRight, TrendingDown, TrendingUp, Repeat, ChevronRight, AlertCircle } from 'lucide-react'
+import { TrendingDown, TrendingUp, Repeat, ChevronRight, AlertCircle } from 'lucide-react'
 import { useAccounts, useAlerts, useBudgets, useCategories, useSubscriptions, useTransactions } from '@/data/hooks'
 import {
   activeSubscriptionsMonthlyCost,
@@ -71,15 +71,6 @@ export function DashboardPage() {
           </div>
         </div>
       </button>
-
-      {/* Reste à vivre */}
-      <section className="card card-pad rise live-card" style={{ animationDelay: '90ms' }}>
-        <div>
-          <span className="section-label">Reste à vivre ce mois-ci</span>
-          <div className="live-amount num">{formatMoney(summary.income - summary.spending)}</div>
-        </div>
-        <span className="live-spark"><ArrowUpRight size={22} /></span>
-      </section>
 
       {/* Budgets summary */}
       <section className="rise" style={{ animationDelay: '140ms' }}>

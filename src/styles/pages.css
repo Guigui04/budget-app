@@ -1864,3 +1864,11 @@
   max-height: 46vh;
   overflow-y: auto;
 }
+
+/* Chevron d'affordance sur les lignes d'opérations (cliquable) */
+.txn-chevron {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  margin-left: 2px;
+  opacity: 0.6;
+}
