@@ -8,9 +8,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
 import { useSession } from '@/store/session'
 import {
-  clearPendingAspspId,
+  clearPendingBankAuth,
   completeBankAuth,
+  listInstitutions,
   manualBankSync,
+  type AspspChoice,
   type CompleteBankAuthParams,
   type CompleteBankAuthResult,
   type ManualSyncResult,
@@ -335,11 +337,20 @@ export function useCompleteBankCallback() {
   return useMutation({
     mutationFn: async (params: CompleteBankAuthParams): Promise<CompleteBankAuthResult> => completeBankAuth(params),
     onSuccess: () => {
-      clearPendingAspspId()
+      clearPendingBankAuth()
       for (const queryKey of bankSyncKeys) {
         qc.invalidateQueries({ queryKey })
       }
     },
+  })
+}
+
+/** Liste des banques disponibles (sélecteur de connexion). */
+export function useInstitutions(country = 'FR') {
+  return useQuery({
+    queryKey: ['institutions', country] as const,
+    queryFn: async (): Promise<AspspChoice[]> => listInstitutions(country),
+    staleTime: 60 * 60 * 1000,
   })
 }
 

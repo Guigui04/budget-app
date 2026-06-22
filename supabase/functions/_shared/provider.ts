@@ -1,5 +1,6 @@
 import type { BankProvider } from './bankProvider.ts'
 import { EnableBankingProvider } from './enableBanking.ts'
+import { GoCardlessProvider } from './gocardless.ts'
 
 /**
  * Single place that decides which aggregator implementation to use.
@@ -10,6 +11,8 @@ export function getBankProvider(): BankProvider {
   switch (which) {
     case 'enablebanking':
       return new EnableBankingProvider()
+    case 'gocardless':
+      return new GoCardlessProvider()
     default:
       throw new Error(`Unknown BANK_PROVIDER: ${which}`)
   }

@@ -18,6 +18,8 @@ interface CallbackBody {
   code?: unknown
   state?: unknown
   aspspId?: unknown
+  aspspName?: unknown
+  aspspCountry?: unknown
 }
 
 Deno.serve(async (req) => {
@@ -33,11 +35,12 @@ Deno.serve(async (req) => {
     const body = await req.json() as CallbackBody
     const code = typeof body.code === 'string' ? body.code : ''
     const state = typeof body.state === 'string' ? body.state : ''
-    const aspspId = typeof body.aspspId === 'string' ? body.aspspId : ''
-    const aspsp = ASPSP_BY_ID[aspspId]
+    // Nom de banque générique (GoCardless) ou legacy id mappé (Enable Banking).
+    const legacy = typeof body.aspspId === 'string' ? ASPSP_BY_ID[body.aspspId] : undefined
+    const aspspName = typeof body.aspspName === 'string' ? body.aspspName : legacy?.name
 
     if (!code || !state) return json({ error: 'Retour bancaire incomplet' }, 400)
-    if (!aspsp) return json({ error: 'Banque non reconnue' }, 400)
+    if (!aspspName) return json({ error: 'Banque non reconnue' }, 400)
 
     const [stateHouseholdId, stateUserId] = state.split(':')
     if (stateHouseholdId !== caller.householdId || stateUserId !== caller.userId) {
@@ -53,8 +56,8 @@ Deno.serve(async (req) => {
       .insert({
         household_id: caller.householdId,
         owner_user_id: caller.userId,
-        provider: 'enablebanking',
-        aspsp_name: aspsp.name,
+        provider: Deno.env.get('BANK_PROVIDER') ?? 'enablebanking',
+        aspsp_name: aspspName,
         external_session_id: session.sessionId,
         consent_expires_at: session.consentExpiresAt,
         status: 'active',

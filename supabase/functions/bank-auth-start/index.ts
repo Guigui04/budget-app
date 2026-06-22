@@ -23,22 +23,27 @@ Deno.serve(async (req) => {
   if (!caller) return json({ error: 'Foyer introuvable' }, 403)
 
   try {
-    const { aspspId, redirectAfter } = await req.json()
-    const aspsp = ASPSP_BY_ID[aspspId]
-    if (!aspsp) return json({ error: 'Banque non supportée' }, 400)
+    const body = await req.json()
+    // Sélecteur générique (GoCardless : nom d'institution) ou legacy id mappé.
+    const legacy = typeof body.aspspId === 'string' ? ASPSP_BY_ID[body.aspspId] : undefined
+    const aspspName = typeof body.aspspName === 'string' ? body.aspspName : legacy?.name
+    const aspspCountry = typeof body.aspspCountry === 'string' ? body.aspspCountry : legacy?.country ?? 'FR'
+    if (!aspspName) return json({ error: 'Banque non supportée' }, 400)
 
     // `state` lie le callback à l'utilisateur + foyer sans exposer de secret.
     const state = `${caller.householdId}:${caller.userId}:${crypto.randomUUID()}`
 
     const provider = getBankProvider()
     const result = await provider.startAuth({
-      aspspName: aspsp.name,
-      aspspCountry: aspsp.country,
-      redirectUrl: redirectAfter ?? `${Deno.env.get('APP_URL')}/comptes`,
+      aspspName,
+      aspspCountry,
+      redirectUrl: body.redirectAfter ?? `${Deno.env.get('APP_URL')}/comptes`,
       state,
     })
 
-    return json({ redirectUrl: result.redirectUrl })
+    // authReference (ex. requisition GoCardless) + state renvoyés au front, qui
+    // les rejouera au callback (certains agrégateurs ne renvoient pas de `code`).
+    return json({ redirectUrl: result.redirectUrl, authReference: result.authReference, state })
   } catch (err) {
     return json({ error: err instanceof Error ? err.message : 'Erreur' }, 500)
   }

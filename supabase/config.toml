@@ -1,6 +1,9 @@
 # Supabase project config. Replace project_id with your real ref.
 project_id = "foyer-budget"
 
+[functions.bank-institutions]
+verify_jwt = true
+
 [functions.bank-auth-start]
 verify_jwt = true
 

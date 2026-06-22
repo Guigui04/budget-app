@@ -1837,3 +1837,30 @@
   color: var(--accent-text);
   font-weight: 600;
 }
+
+/* Recherche de banque (connexion) */
+.bank-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  margin: 12px 0;
+  border-radius: 12px;
+  background: var(--surface-2, var(--accent-soft));
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.bank-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: var(--text);
+  outline: none;
+}
+
+.bank-pick-list {
+  max-height: 46vh;
+  overflow-y: auto;
+}

@@ -31,7 +31,8 @@ export function AccountsPage() {
 
   useEffect(() => {
     const code = searchParams.get('code')
-    const state = searchParams.get('state')
+    // Enable Banking renvoie `state` ; GoCardless renvoie `ref` (= notre state).
+    const state = searchParams.get('state') ?? searchParams.get('ref')
     const error = searchParams.get('error')
 
     if (handledCallback.current) return
@@ -41,12 +42,14 @@ export function AccountsPage() {
       setSearchParams({}, { replace: true })
       return
     }
-    if (!code || !state) return
+    // Retour de banque détecté dès qu'un code (EB) ou un state/ref (GoCardless)
+    // est présent ; le code GoCardless (requisition) est restauré côté client.
+    if (!code && !state) return
 
     handledCallback.current = true
     queueMicrotask(() => setSyncMessage('Finalisation de la connexion bancaire…'))
     callback.mutate(
-      { code, state },
+      { code: code ?? undefined, state: state ?? undefined },
       {
         onSuccess: (result) => {
           setSyncMessage(`${result.accounts} compte${result.accounts > 1 ? 's' : ''} ajouté${result.accounts > 1 ? 's' : ''}.`)
