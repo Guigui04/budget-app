@@ -1,16 +1,17 @@
 import { NavLink } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { LayoutGrid, ArrowLeftRight, Wallet, Target, Repeat } from 'lucide-react'
-
-const tabs = [
-  { to: '/', label: 'Accueil', icon: LayoutGrid, end: true },
-  { to: '/operations', label: 'Opérations', icon: ArrowLeftRight, end: false },
-  { to: '/budgets', label: 'Budgets', icon: Wallet, end: false },
-  { to: '/objectifs', label: 'Objectifs', icon: Target, end: false },
-  { to: '/abonnements', label: 'Abos', icon: Repeat, end: false },
-]
+import { useT } from '@/i18n'
 
 export function TabBar() {
+  const t = useT()
+  const tabs = [
+    { to: '/', label: t.nav.home, icon: LayoutGrid, end: true },
+    { to: '/operations', label: t.nav.transactions, icon: ArrowLeftRight, end: false },
+    { to: '/budgets', label: t.nav.budgets, icon: Wallet, end: false },
+    { to: '/objectifs', label: t.nav.goals, icon: Target, end: false },
+    { to: '/abonnements', label: t.nav.subscriptionsShort, icon: Repeat, end: false },
+  ]
   return (
     <nav className="tabbar">
       <div className="tabbar-inner">

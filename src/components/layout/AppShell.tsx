@@ -3,33 +3,34 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { TopBar } from './TopBar'
 import { TabBar } from './TabBar'
 import { useSession } from '@/store/session'
+import { useT } from '@/i18n'
 
-const titles: Record<string, string> = {
-  '/': 'Accueil',
-  '/operations': 'Opérations',
-  '/budgets': 'Budgets',
-  '/objectifs': 'Objectifs',
-  '/abonnements': 'Abonnements',
-  '/comptes': 'Comptes',
-  '/alertes': 'Notifications',
-  '/reglages': 'Réglages',
-}
-
-function greetingForHour(): string {
+function greetingForHour(t: ReturnType<typeof useT>): string {
   const h = new Date().getHours()
-  if (h < 6) return 'Bonne nuit'
-  if (h < 12) return 'Bonjour'
-  if (h < 18) return 'Bon après-midi'
-  return 'Bonsoir'
+  if (h < 6) return t.greeting.night
+  if (h < 12) return t.greeting.morning
+  if (h < 18) return t.greeting.afternoon
+  return t.greeting.evening
 }
 
 export function AppShell() {
   const { pathname } = useLocation()
   const user = useSession((s) => s.user)
   const reduceMotion = useReducedMotion()
+  const t = useT()
+  const titles: Record<string, string> = {
+    '/': t.nav.home,
+    '/operations': t.nav.transactions,
+    '/budgets': t.nav.budgets,
+    '/objectifs': t.nav.goals,
+    '/abonnements': t.nav.subscriptions,
+    '/comptes': t.nav.accounts,
+    '/alertes': t.nav.alerts,
+    '/reglages': t.nav.settings,
+  }
   const isHome = pathname === '/'
-  const title = titles[pathname] ?? 'Foyer'
-  const greeting = isHome && user ? `${greetingForHour()}, ${user.displayName}` : undefined
+  const title = titles[pathname] ?? t.common.appName
+  const greeting = isHome && user ? `${greetingForHour(t)}, ${user.displayName}` : undefined
 
   return (
     <div className="app-shell">
