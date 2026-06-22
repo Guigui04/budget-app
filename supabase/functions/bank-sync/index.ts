@@ -125,6 +125,21 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Détecte les abonnements récurrents à partir des transactions fraîchement
+  // importées (non bloquant : un échec ne doit pas casser la synchro).
+  try {
+    const baseUrl = Deno.env.get('SUPABASE_URL')
+    if (baseUrl) {
+      await fetch(`${baseUrl}/functions/v1/detect-subscriptions`, {
+        method: 'POST',
+        headers: { Authorization: serviceHeader, 'Content-Type': 'application/json' },
+        body: '{}',
+      })
+    }
+  } catch {
+    // Ignoré — la détection retentera à la prochaine synchro.
+  }
+
   return json({ synced: report.length, scope: caller ? 'household' : 'all', report })
 })
 
