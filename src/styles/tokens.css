@@ -1,0 +1,141 @@
+/*
+ * Design tokens - Foyer mobile
+ * Direction: tactile household finance, calm glass, vivid money signals.
+ */
+
+:root {
+  --font-display: 'Cabinet Grotesk', 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-ui: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-numeric: 'Satoshi', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --r-xs: 6px;
+  --r-sm: 8px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 28px;
+  --r-full: 999px;
+
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.28, 1.7, 0.22, 1);
+  --dur-fast: 150ms;
+  --dur: 260ms;
+  --dur-slow: 620ms;
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+:root,
+[data-theme='light'] {
+  color-scheme: light;
+
+  --bg: #f6f8fb;
+  --bg-grad-1: #edf9f5;
+  --bg-grad-2: #eef1ff;
+  --surface: rgba(255, 255, 255, 0.82);
+  --surface-solid: #ffffff;
+  --surface-2: #eef2f7;
+  --surface-sunk: #e2e8f1;
+
+  --text: #10141d;
+  --text-muted: #627084;
+  --text-faint: #98a4b5;
+
+  --border: rgba(16, 20, 29, 0.09);
+  --border-strong: rgba(16, 20, 29, 0.16);
+
+  --accent: #10b981;
+  --accent-bright: #22d397;
+  --accent-soft: rgba(16, 185, 129, 0.13);
+  --accent-text: #087a58;
+  --on-accent: #04140e;
+
+  --positive: #0ea875;
+  --positive-soft: rgba(14, 168, 117, 0.13);
+
+  --negative: #ef5a4d;
+  --negative-soft: rgba(239, 90, 77, 0.12);
+
+  --amber: #bc7a18;
+  --amber-soft: rgba(188, 122, 24, 0.14);
+
+  --violet: #6e62f5;
+  --violet-soft: rgba(110, 98, 245, 0.13);
+
+  --info: #2f67ff;
+  --info-soft: rgba(47, 103, 255, 0.12);
+
+  --glass: rgba(255, 255, 255, 0.68);
+  --glass-strong: rgba(255, 255, 255, 0.9);
+  --overlay: rgba(13, 18, 28, 0.42);
+
+  --shadow-sm: 0 1px 2px rgba(23, 32, 48, 0.06), 0 8px 24px rgba(37, 53, 78, 0.06);
+  --shadow-md: 0 18px 44px rgba(37, 53, 78, 0.12), 0 2px 6px rgba(37, 53, 78, 0.06);
+  --shadow-lg: 0 34px 90px rgba(23, 32, 48, 0.22), 0 10px 28px rgba(23, 32, 48, 0.12);
+  --shadow-glow: 0 22px 70px -28px rgba(16, 185, 129, 0.68);
+
+  --grain-opacity: 0.035;
+  --grid-line: rgba(47, 103, 255, 0.055);
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #090c12;
+  --bg-grad-1: #0f1720;
+  --bg-grad-2: #111126;
+  --surface: rgba(18, 23, 32, 0.78);
+  --surface-solid: #141923;
+  --surface-2: #1d2430;
+  --surface-sunk: #0f141d;
+
+  --text: #f7f9fc;
+  --text-muted: #9aa7ba;
+  --text-faint: #596679;
+
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+
+  --accent: #29e0a1;
+  --accent-bright: #55f4bb;
+  --accent-soft: rgba(41, 224, 161, 0.14);
+  --accent-text: #68ffd0;
+  --on-accent: #04140e;
+
+  --positive: #29e0a1;
+  --positive-soft: rgba(41, 224, 161, 0.14);
+
+  --negative: #ff786b;
+  --negative-soft: rgba(255, 120, 107, 0.15);
+
+  --amber: #ffc35a;
+  --amber-soft: rgba(255, 195, 90, 0.15);
+
+  --violet: #a092ff;
+  --violet-soft: rgba(160, 146, 255, 0.16);
+
+  --info: #7ba5ff;
+  --info-soft: rgba(123, 165, 255, 0.14);
+
+  --glass: rgba(18, 23, 32, 0.64);
+  --glass-strong: rgba(20, 25, 35, 0.92);
+  --overlay: rgba(0, 0, 0, 0.62);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.48);
+  --shadow-md: 0 18px 48px rgba(0, 0, 0, 0.48);
+  --shadow-lg: 0 38px 100px rgba(0, 0, 0, 0.72), 0 12px 34px rgba(0, 0, 0, 0.52);
+  --shadow-glow: 0 24px 78px -28px rgba(41, 224, 161, 0.78);
+
+  --grain-opacity: 0.05;
+  --grid-line: rgba(123, 165, 255, 0.06);
+}
