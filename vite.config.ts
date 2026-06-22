@@ -10,6 +10,29 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    rolldownOptions: {
+      output: {
+        // Isole les grosses libs (graphes, animations) dans leurs propres chunks
+        // pour qu'elles ne pèsent pas sur le bundle d'entrée.
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined
+          if (id.includes('recharts') || id.includes('d3-')) return 'charts'
+          if (id.includes('/motion') || id.includes('framer-motion')) return 'motion'
+          if (
+            id.includes('react-router') ||
+            id.includes('@tanstack') ||
+            id.includes('/react/') ||
+            id.includes('/react-dom/') ||
+            id.includes('/scheduler/')
+          ) {
+            return 'vendor'
+          }
+          return undefined
+        },
+      },
+    },
+  },
   plugins: [
     react(),
     VitePWA({

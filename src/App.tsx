@@ -1,19 +1,22 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
+import { RouteFallback } from '@/components/layout/RouteFallback'
 import { useSession } from '@/store/session'
 import { useThemeStore, applyTheme } from '@/store/theme'
-import { LoginPage } from '@/features/auth/LoginPage'
-import { DashboardPage } from '@/features/dashboard/DashboardPage'
-import { TransactionsPage } from '@/features/transactions/TransactionsPage'
-import { BudgetsPage } from '@/features/budgets/BudgetsPage'
-import { GoalsPage } from '@/features/goals/GoalsPage'
-import { SubscriptionsPage } from '@/features/subscriptions/SubscriptionsPage'
-import { AccountsPage } from '@/features/accounts/AccountsPage'
-import { AlertsPage } from '@/features/alerts/AlertsPage'
-import { SettingsPage } from '@/features/settings/SettingsPage'
-import { OnboardingPage } from '@/features/onboarding/OnboardingPage'
+
+// Chaque page est chargée à la demande (code-splitting par route).
+const LoginPage = lazy(() => import('@/features/auth/LoginPage').then((m) => ({ default: m.LoginPage })))
+const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })))
+const TransactionsPage = lazy(() => import('@/features/transactions/TransactionsPage').then((m) => ({ default: m.TransactionsPage })))
+const BudgetsPage = lazy(() => import('@/features/budgets/BudgetsPage').then((m) => ({ default: m.BudgetsPage })))
+const GoalsPage = lazy(() => import('@/features/goals/GoalsPage').then((m) => ({ default: m.GoalsPage })))
+const SubscriptionsPage = lazy(() => import('@/features/subscriptions/SubscriptionsPage').then((m) => ({ default: m.SubscriptionsPage })))
+const AccountsPage = lazy(() => import('@/features/accounts/AccountsPage').then((m) => ({ default: m.AccountsPage })))
+const AlertsPage = lazy(() => import('@/features/alerts/AlertsPage').then((m) => ({ default: m.AlertsPage })))
+const SettingsPage = lazy(() => import('@/features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })))
+const OnboardingPage = lazy(() => import('@/features/onboarding/OnboardingPage').then((m) => ({ default: m.OnboardingPage })))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -49,21 +52,23 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/bienvenue" element={<OnboardingRoute />} />
-          <Route element={<Protected />}>
-            <Route path="/" element={<DashboardPage />} />
-            <Route path="/operations" element={<TransactionsPage />} />
-            <Route path="/budgets" element={<BudgetsPage />} />
-            <Route path="/objectifs" element={<GoalsPage />} />
-            <Route path="/abonnements" element={<SubscriptionsPage />} />
-            <Route path="/comptes" element={<AccountsPage />} />
-            <Route path="/alertes" element={<AlertsPage />} />
-            <Route path="/reglages" element={<SettingsPage />} />
-          </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <Suspense fallback={<RouteFallback />}>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/bienvenue" element={<OnboardingRoute />} />
+            <Route element={<Protected />}>
+              <Route path="/" element={<DashboardPage />} />
+              <Route path="/operations" element={<TransactionsPage />} />
+              <Route path="/budgets" element={<BudgetsPage />} />
+              <Route path="/objectifs" element={<GoalsPage />} />
+              <Route path="/abonnements" element={<SubscriptionsPage />} />
+              <Route path="/comptes" element={<AccountsPage />} />
+              <Route path="/alertes" element={<AlertsPage />} />
+              <Route path="/reglages" element={<SettingsPage />} />
+            </Route>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </QueryClientProvider>
   )
