@@ -5,7 +5,7 @@ import { useAccounts, useCompleteBankCallback, useConnections, useDeleteBankConn
 import { totalBalance } from '@/data/selectors'
 import { Button } from '@/components/ui/Button'
 import { ConnectBankSheet } from './ConnectBankSheet'
-import { formatMoney, maskIban, formatRelative, isStale, daysUntil } from '@/lib/format'
+import { formatMoney, formatBalanceParts, maskIban, formatRelative, isStale, daysUntil } from '@/lib/format'
 
 export function AccountsPage() {
   const { data: accounts = [] } = useAccounts()
@@ -93,17 +93,23 @@ export function AccountsPage() {
 
   return (
     <div className="page">
-      <section className="card card-pad rise total-card">
-        <span className="section-label">Patrimoine consolidé</span>
-        <div className="total-amount num">{formatMoney(total)}</div>
-        <span className="total-sub">{accounts.length} comptes · {connections.length} banques</span>
-        <div className="total-actions">
-          <Button variant="ghost" size="sm" onClick={refreshNow} disabled={sync.isPending || callback.isPending || connections.length === 0}>
-            <RefreshCw size={16} className={sync.isPending || callback.isPending ? 'spin' : undefined} />
-            {sync.isPending || callback.isPending ? 'Synchro…' : 'Rafraîchir'}
-          </Button>
+      <section className="hero-card accounts-hero rise" style={{ animationDelay: '20ms' }}>
+        <div className="hero-top">
+          <span className="section-label">Patrimoine consolidé</span>
+          <button
+            className="hero-refresh"
+            onClick={refreshNow}
+            disabled={sync.isPending || callback.isPending || connections.length === 0}
+            aria-label="Rafraîchir"
+          >
+            <RefreshCw size={18} className={sync.isPending || callback.isPending ? 'spin' : undefined} />
+          </button>
         </div>
-        {syncMessage && <p className={sync.isError ? 'sync-note error' : 'sync-note'}>{syncMessage}</p>}
+        <div className="hero-amount num">
+          {(() => { const b = formatBalanceParts(total); return <>{b.sign}{b.whole}<span className="hero-amount-cents">,{b.cents} €</span></> })()}
+        </div>
+        <span className="hero-fresh">{accounts.length} compte{accounts.length > 1 ? 's' : ''} · {connections.length} banque{connections.length > 1 ? 's' : ''}</span>
+        {syncMessage && <p className="hero-sync-note">{syncMessage}</p>}
       </section>
 
       {grouped.map(({ connection, accounts: accs }, i) => {

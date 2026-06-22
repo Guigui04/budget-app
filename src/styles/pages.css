@@ -816,11 +816,21 @@
 }
 
 .txn-date {
-  margin: 0 var(--sp-2) var(--sp-2);
-  color: var(--text-faint);
-  font-size: 0.72rem;
+  position: sticky;
+  top: calc(var(--safe-top) + 58px);
+  z-index: 5;
+  display: inline-block;
+  margin: 0 0 var(--sp-2) var(--sp-1);
+  padding: 5px 12px;
+  border-radius: var(--r-full);
+  background: color-mix(in srgb, var(--surface-solid) 62%, transparent);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  color: var(--text-muted);
+  font-size: 0.7rem;
   font-weight: 900;
-  letter-spacing: 0;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 
@@ -2153,4 +2163,31 @@
 .balance-stack .hero-card {
   position: relative;
   z-index: 1;
+}
+
+/* ============ Comptes — carte total (hero) ============ */
+.accounts-hero {
+  cursor: default;
+}
+
+.hero-refresh {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-full);
+  color: var(--hero-ink);
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  transition: transform var(--dur) var(--ease-spring), background var(--dur-fast);
+}
+
+.hero-refresh:active { transform: scale(0.9); }
+.hero-refresh:disabled { opacity: 0.5; }
+
+.hero-sync-note {
+  margin-top: var(--sp-3);
+  color: var(--hero-sub);
+  font-size: 0.82rem;
+  font-weight: 600;
 }
