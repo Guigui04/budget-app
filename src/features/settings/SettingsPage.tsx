@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, Palette, Landmark, ShieldCheck, LogOut, Smartphone, ChevronRight, Fingerprint, UserRound } from 'lucide-react'
+import { Bell, Palette, Landmark, ShieldCheck, LogOut, Smartphone, ChevronRight, UserRound } from 'lucide-react'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { Avatar } from '@/components/ui/Avatar'
 import { useSession } from '@/store/session'
@@ -9,6 +9,7 @@ import { useSavePushSubscription, useUpdateProfile } from '@/data/hooks'
 import { demoUsers } from '@/data/demo'
 import { requestPushSubscription, type PushOutcome } from '@/lib/push'
 import { Button } from '@/components/ui/Button'
+import { PinSettings } from './PinSettings'
 import type { AlertType } from '@/types'
 
 const alertLabels: Record<AlertType, string> = {
@@ -164,11 +165,7 @@ export function SettingsPage() {
             <ChevronRight size={18} />
           </button>
           <div className="settings-divider" />
-          <div className="settings-row">
-            <Fingerprint size={18} />
-            <span className="settings-row-label">Verrouillage par code / biométrie</span>
-            <span className="pill">Bientôt</span>
-          </div>
+          <PinSettings />
         </div>
       </section>
 

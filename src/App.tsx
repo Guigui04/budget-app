@@ -3,8 +3,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
 import { RouteFallback } from '@/components/layout/RouteFallback'
+import { UnlockScreen } from '@/features/auth/UnlockScreen'
 import { useSession } from '@/store/session'
 import { useThemeStore, applyTheme } from '@/store/theme'
+import { useLock } from '@/store/lock'
 
 // Chaque page est chargée à la demande (code-splitting par route).
 const LoginPage = lazy(() => import('@/features/auth/LoginPage').then((m) => ({ default: m.LoginPage })))
@@ -43,11 +45,15 @@ function OnboardingRoute() {
 export default function App() {
   const initialize = useSession((s) => s.initialize)
   const preference = useThemeStore((s) => s.preference)
+  const locked = useLock((s) => s.locked)
 
   useEffect(() => {
     applyTheme(preference)
     initialize()
   }, [initialize, preference])
+
+  // Verrou PIN : tant que l'app est verrouillée, rien d'autre n'est rendu.
+  if (locked) return <UnlockScreen />
 
   return (
     <QueryClientProvider client={queryClient}>

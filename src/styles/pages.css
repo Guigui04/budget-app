@@ -1732,3 +1732,16 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Verrou PIN */
+.pin-input {
+  text-align: center;
+  letter-spacing: 0.4em;
+  font-size: 1.25rem;
+}
+
+.pin-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
