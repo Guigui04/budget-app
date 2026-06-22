@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowDownLeft, ArrowUpRight, Repeat, ChevronRight, AlertCircle, CreditCard } from 'lucide-react'
+import { Repeat, ChevronRight, AlertCircle } from 'lucide-react'
 import { useAccounts, useAlerts, useBudgets, useCategories, useSubscriptions, useTransactions } from '@/data/hooks'
 import {
   activeSubscriptionsMonthlyCost,
@@ -16,7 +16,8 @@ import { MonthlyBars } from '@/components/charts/MonthlyBars'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { QuickActions } from './QuickActions'
-import { formatBalanceParts, formatMoneyCompact, isStale, formatRelative } from '@/lib/format'
+import { BalanceStack } from './BalanceStack'
+import { formatMoneyCompact, isStale } from '@/lib/format'
 import { alertCopy } from '@/features/alerts/alertCopy'
 
 export function DashboardPage() {
@@ -43,35 +44,18 @@ export function DashboardPage() {
   const recentAlerts = alerts.slice(0, 3)
   const stale = accounts.length > 0 && isStale(summary.lastSync)
   const todoCount = transactions.filter((t) => t.categoryId === null).length
-  const bal = formatBalanceParts(summary.balance)
-  const flow = summary.income + summary.spending
-  const incomeShare = flow > 0 ? summary.income / flow : 0.5
 
   return (
     <div className="page">
-      {/* Hero balance — carte « relevé » */}
-      <button type="button" className="hero-card rise" onClick={() => navigate('/comptes')} style={{ animationDelay: '40ms' }}>
-        <div className="hero-top">
-          <span className="section-label">Solde total du foyer</span>
-          <span className="hero-chip" aria-hidden="true"><CreditCard size={15} /> {accounts.length} compte{accounts.length > 1 ? 's' : ''}</span>
-        </div>
-        <div className="hero-amount num">
-          {bal.sign}{bal.whole}<span className="hero-amount-cents">,{bal.cents} €</span>
-        </div>
-        <span className={`hero-fresh ${stale ? 'stale' : ''}`}>
-          {stale ? 'Données à actualiser' : `Mis à jour ${formatRelative(summary.lastSync)}`}
-        </span>
-
-        <div className="hero-flow">
-          <div className="hero-flow-bar">
-            <span className="hero-flow-in" style={{ width: `${incomeShare * 100}%` }} />
-          </div>
-          <div className="hero-flow-legend">
-            <span className="hero-flow-item"><ArrowDownLeft size={14} /> Entrées <b className="num">{formatMoneyCompact(summary.income)}</b></span>
-            <span className="hero-flow-item out"><ArrowUpRight size={14} /> Sorties <b className="num">{formatMoneyCompact(summary.spending)}</b></span>
-          </div>
-        </div>
-      </button>
+      <BalanceStack
+        balance={summary.balance}
+        income={summary.income}
+        spending={summary.spending}
+        accountsCount={accounts.length}
+        lastSync={summary.lastSync}
+        stale={stale}
+        onClick={() => navigate('/comptes')}
+      />
 
       <QuickActions todoCount={todoCount} />
 

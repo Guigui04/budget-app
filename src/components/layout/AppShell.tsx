@@ -1,9 +1,17 @@
+import { useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { TopBar } from './TopBar'
 import { TabBar } from './TabBar'
 import { useSession } from '@/store/session'
 import { useT } from '@/i18n'
+
+// Ordre des écrans → détermine le sens du glissement de transition.
+const NAV_ORDER = ['/', '/operations', '/budgets', '/objectifs', '/abonnements', '/comptes', '/alertes', '/reglages']
+const navIndex = (p: string) => {
+  const i = NAV_ORDER.indexOf(p)
+  return i === -1 ? 0 : i
+}
 
 function greetingForHour(t: ReturnType<typeof useT>): string {
   const h = new Date().getHours()
@@ -32,6 +40,15 @@ export function AppShell() {
   const title = titles[pathname] ?? t.common.appName
   const greeting = isHome && user ? `${greetingForHour(t)}, ${user.displayName}` : undefined
 
+  // Sens du glissement : avancer dans la nav = vers la gauche, reculer = droite.
+  // Pattern officiel React : ajuster l'état pendant le rendu quand la route change.
+  const current = navIndex(pathname)
+  const [nav, setNav] = useState({ index: current, dir: 1 })
+  if (nav.index !== current) {
+    setNav({ index: current, dir: current >= nav.index ? 1 : -1 })
+  }
+  const shift = 26 * nav.dir
+
   return (
     <div className="app-shell">
       <div className="shell-ledger" aria-hidden="true" />
@@ -40,10 +57,10 @@ export function AppShell() {
         <motion.main
           key={pathname}
           className="app-main"
-          initial={reduceMotion ? false : { opacity: 0, y: 12, filter: 'blur(6px)' }}
-          animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, filter: 'blur(0px)' }}
-          exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -8, filter: 'blur(4px)' }}
-          transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+          initial={reduceMotion ? false : { opacity: 0, x: shift }}
+          animate={reduceMotion ? { opacity: 1 } : { opacity: 1, x: 0 }}
+          exit={reduceMotion ? { opacity: 0 } : { opacity: 0, x: -shift }}
+          transition={{ type: 'spring', stiffness: 320, damping: 32, mass: 0.8 }}
         >
           <Outlet />
         </motion.main>
