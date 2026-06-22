@@ -290,14 +290,20 @@ proposer de **créer un foyer** ou **rejoindre via un code d'invitation**.
 
 ## 5. PHASE 3 — Polish / nice-to-have
 
-| Réf | Tâche | Notes |
-|-----|-------|-------|
-| T7 | **Verrou PIN / biométrie** à l'ouverture | brief §12 (recommandé). WebAuthn ou code PIN applicatif (stocké hashé localement). Écran de déverrouillage + réglage on/off. |
-| T8 | **« Perso » vs « commune »** sur une transaction | brief §3/§12 — V2. Ajouter colonne `transactions.scope` + filtre. |
-| T9 | **i18n** simple | Extraire les libellés dans un dictionnaire (ex. `src/i18n/fr.ts`) + hook `useT()`. FR par défaut. |
-| T10 | **Code-splitting** | Bundle ~996 Ko (recharts + motion). `React.lazy` par route + `Suspense`, ou `manualChunks` vendor. |
-| T11 | **Tests** | Vitest + Testing Library (unit sur `selectors.ts`, hooks) ; Playwright pour les parcours critiques (login démo, catégoriser, créer budget). Viser une couverture utile. |
-| T12 | **Multi-devises** | EUR prioritaire ; gérer proprement l'affichage si `currency != EUR` (déjà partiellement dans `format.ts`). |
+| Réf | Tâche | État | Notes |
+|-----|-------|------|-------|
+| T7 | **Verrou PIN / biométrie** à l'ouverture | ✅ | Code PIN applicatif hashé PBKDF2 (`src/lib/pin.ts`), store `src/store/lock.ts` (verrou à l'ouverture + arrière-plan), `UnlockScreen`, réglage `PinSettings`. Biométrie WebAuthn possible en V2. |
+| T8 | **« Perso » vs « commune »** sur une transaction | ❌ | brief §3/§12 — V2. Ajouter colonne `transactions.scope` + filtre. |
+| T9 | **i18n** simple | ✅ | Dictionnaire typé `src/i18n/fr.ts` + hook `useT()` + `interpolate()`. Navigation migrée ; reste à étendre aux pages au fil de l'eau. |
+| T10 | **Code-splitting** | ✅ | `React.lazy` par route + `Suspense` (`RouteFallback`) et `manualChunks` (charts/motion/vendor). Bundle d'entrée ~1011 Ko → ~239 Ko. |
+| T11 | **Tests** | ✅ | Vitest + Testing Library : 33 tests (`format`, `selectors`, `mappers`, `pin`, `ProgressBar`). `npm test`. Playwright (parcours critiques) reste à ajouter. |
+| T12 | **Multi-devises** | ✅ | `format.ts` : cache de formatteurs Intl ; montants par élément (transaction, solde, compte lié) dans leur devise ; totaux agrégés en EUR. |
+
+> **Note revue T1→T6 (réel).** Bug corrigé : les écritures `budgets`/`goals` côté
+> client n'envoyaient pas `household_id`, requis par la policy RLS
+> (`with check household_id = current_household_id()`, aucun défaut en table) ;
+> l'`onConflict` budget a aussi été aligné sur la contrainte
+> `(household_id, category_id, period)`. À re-valider sur Supabase réel.
 
 ---
 
