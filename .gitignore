@@ -36,3 +36,7 @@ supabase/.branches
 .vercel
 
 .vercel
+
+# UI skill scratch
+._*.mjs
+._*.png

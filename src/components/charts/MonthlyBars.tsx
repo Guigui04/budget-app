@@ -14,16 +14,19 @@ export function MonthlyBars({ points }: MonthlyBarsProps) {
   return (
     <div>
       <ResponsiveContainer width="100%" height={150}>
-        <BarChart data={data} margin={{ top: 8, right: 0, bottom: 0, left: 0 }} barCategoryGap="28%">
+        <BarChart data={data} margin={{ top: 8, right: 0, bottom: 0, left: 0 }} barCategoryGap="26%">
           <XAxis
             dataKey="label"
             axisLine={false}
             tickLine={false}
             tick={{ fontSize: 11, fill: 'var(--text-faint)', fontFamily: 'var(--font-ui)' }}
           />
-          <Bar dataKey="spending" radius={[7, 7, 7, 7]} maxBarSize={30}>
+          <Bar dataKey="spending" radius={[14, 14, 14, 14]} maxBarSize={34}>
             {data.map((_, i) => (
-              <Cell key={i} fill={i === currentIdx ? 'var(--accent)' : 'var(--border-strong)'} />
+              <Cell
+                key={i}
+                fill={i === currentIdx ? 'var(--accent)' : 'var(--accent-soft)'}
+              />
             ))}
           </Bar>
         </BarChart>

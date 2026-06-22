@@ -360,19 +360,19 @@
   position: relative;
   overflow: hidden;
   width: 100%;
-  border-radius: 18px;
+  border-radius: var(--r-xl);
   padding: var(--sp-6);
-  color: #f8fbff;
+  color: var(--hero-ink);
   text-align: left;
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 34%),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.045) 0 1px, transparent 1px 24px),
-    linear-gradient(160deg, #101a24, #081019 62%, #07140f);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: var(--shadow-glow), 0 28px 70px rgba(3, 9, 15, 0.36);
+    radial-gradient(120% 90% at 12% 6%, rgba(255, 255, 255, 0.26), transparent 46%),
+    radial-gradient(90% 80% at 96% 100%, rgba(255, 255, 255, 0.14), transparent 52%),
+    var(--hero-grad);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255, 255, 255, 0.34);
   cursor: pointer;
   transform-origin: center;
-  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast);
+  transition: transform var(--dur) var(--ease-spring), box-shadow var(--dur) var(--ease-out);
 }
 
 .hero-card::before {
@@ -384,8 +384,8 @@
   height: 230px;
   border-radius: var(--r-full);
   background:
-    conic-gradient(from 220deg, transparent 0deg, rgba(41, 224, 161, 0.72) 74deg, transparent 138deg),
-    radial-gradient(circle, transparent 57%, rgba(255, 255, 255, 0.12) 58%, transparent 60%);
+    conic-gradient(from 220deg, transparent 0deg, rgba(255, 255, 255, 0.5) 74deg, transparent 138deg),
+    radial-gradient(circle, transparent 57%, rgba(255, 255, 255, 0.16) 58%, transparent 60%);
   opacity: 0.8;
   animation: heroSweep 8s linear infinite;
 }
@@ -439,8 +439,8 @@
   width: 7px;
   height: 7px;
   border-radius: var(--r-full);
-  background: var(--accent-bright);
-  box-shadow: 0 0 12px var(--accent-bright);
+  background: #ffffff;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.9);
 }
 
 .hero-fresh.stale {
