@@ -6,6 +6,7 @@
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
+import { useSession } from '@/store/session'
 import {
   clearPendingAspspId,
   completeBankAuth,
@@ -38,6 +39,14 @@ import type {
 } from '@/types'
 
 const live = isSupabaseConfigured && supabase
+
+/** Foyer courant — requis sur les écritures car la policy RLS exige
+ *  `household_id = current_household_id()` (aucun défaut côté table). */
+function requireHouseholdId(): string {
+  const id = useSession.getState().household?.id
+  if (!id) throw new Error('Foyer introuvable.')
+  return id
+}
 
 async function select<T>(table: string, map: (r: Row) => T, order?: string): Promise<T[]> {
   let q = supabase!.from(table).select('*')
@@ -178,9 +187,13 @@ export function useUpsertBudget() {
   return useMutation({
     mutationFn: async ({ categoryId, amount }: { categoryId: string; amount: number }) => {
       if (live) {
-        await supabase!
+        const { error } = await supabase!
           .from('budgets')
-          .upsert({ category_id: categoryId, amount, period: 'monthly' }, { onConflict: 'category_id' })
+          .upsert(
+            { household_id: requireHouseholdId(), category_id: categoryId, amount, period: 'monthly' },
+            { onConflict: 'household_id,category_id,period' },
+          )
+        if (error) throw new Error(error.message)
       } else {
         demoStore.upsertBudget(categoryId, amount)
       }
@@ -205,8 +218,9 @@ export function useSaveGoal() {
   return useMutation({
     mutationFn: async (goal: Omit<Goal, 'householdId' | 'id'> & { id?: string }) => {
       if (live) {
-        await supabase!.from('goals').upsert({
+        const { error } = await supabase!.from('goals').upsert({
           id: goal.id,
+          household_id: requireHouseholdId(),
           name: goal.name,
           target_amount: goal.targetAmount,
           current_amount: goal.currentAmount,
@@ -214,6 +228,7 @@ export function useSaveGoal() {
           linked_account_id: goal.linkedAccountId,
           color: goal.color,
         })
+        if (error) throw new Error(error.message)
       } else {
         demoStore.upsertGoal(goal as Goal)
       }
