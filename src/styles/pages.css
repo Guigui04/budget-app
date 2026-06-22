@@ -1745,3 +1745,25 @@
   flex-direction: column;
   gap: 14px;
 }
+
+/* Bascule connexion / inscription */
+.login-switch {
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-top: 14px;
+}
+
+.login-switch-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--accent-text);
+  cursor: pointer;
+}
+
+.login-switch-btn:hover {
+  text-decoration: underline;
+}

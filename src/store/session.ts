@@ -26,6 +26,7 @@ interface SessionState {
   error: string | null
   initialize: () => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
+  signUp: (email: string, password: string) => Promise<{ needsConfirmation: boolean }>
   signInDemo: () => void
   signOut: () => Promise<void>
   createHousehold: (name: string) => Promise<string>
@@ -131,6 +132,26 @@ export const useSession = create<SessionState>((set) => ({
     }
 
     await useSession.getState().initialize()
+  },
+
+  signUp: async (email, password) => {
+    set({ error: null })
+    if (!isSupabaseConfigured || !supabase) {
+      set({ status: 'authenticated', user: demoUsers[0], household: demoHousehold })
+      return { needsConfirmation: false }
+    }
+
+    const { data, error } = await supabase.auth.signUp({ email, password })
+    if (error) {
+      set({ error: error.message })
+      throw new Error(error.message)
+    }
+
+    // Si la confirmation e-mail est exigée, aucune session n'est ouverte.
+    if (!data.session) return { needsConfirmation: true }
+
+    await useSession.getState().initialize()
+    return { needsConfirmation: false }
   },
 
   signInDemo: () => {

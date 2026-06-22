@@ -7,21 +7,42 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { useSession } from '@/store/session'
 import { isSupabaseConfigured } from '@/lib/supabase'
 
+type Mode = 'signin' | 'signup'
+
 export function LoginPage() {
-  const { status, signIn, signInDemo, error } = useSession()
+  const { status, signIn, signUp, signInDemo, error } = useSession()
+  const [mode, setMode] = useState<Mode>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
+  const [notice, setNotice] = useState<string | null>(null)
 
   if (status === 'authenticated') return <Navigate to="/" replace />
   if (status === 'onboarding') return <Navigate to="/bienvenue" replace />
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
+    setNotice(null)
     setBusy(true)
-    await signIn(email, password)
-    setBusy(false)
+    try {
+      if (mode === 'signup') {
+        const { needsConfirmation } = await signUp(email, password)
+        if (needsConfirmation) {
+          setNotice('Compte créé. Vérifiez votre e-mail pour confirmer, puis connectez-vous.')
+        }
+      } else {
+        await signIn(email, password)
+      }
+    } catch {
+      // L'erreur est déjà exposée via le store (error).
+    } finally {
+      setBusy(false)
+    }
   }
+
+  const submitLabel = busy
+    ? mode === 'signup' ? 'Création…' : 'Connexion…'
+    : mode === 'signup' ? 'Créer mon compte' : 'Se connecter'
 
   return (
     <div className="login">
@@ -61,18 +82,34 @@ export function LoginPage() {
               id="password"
               type="password"
               className="input"
-              autoComplete="current-password"
+              autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              minLength={mode === 'signup' ? 6 : undefined}
               required
             />
           </div>
           {error && <p className="login-error">{error}</p>}
+          {notice && <p className="login-note">{notice}</p>}
           <Button type="submit" block disabled={busy}>
-            {busy ? 'Connexion…' : 'Se connecter'}
+            {submitLabel}
           </Button>
         </form>
+
+        <p className="login-switch">
+          {mode === 'signin' ? 'Pas encore de compte ?' : 'Déjà un compte ?'}{' '}
+          <button
+            type="button"
+            className="login-switch-btn"
+            onClick={() => {
+              setMode((m) => (m === 'signin' ? 'signup' : 'signin'))
+              setNotice(null)
+            }}
+          >
+            {mode === 'signin' ? 'Créer un compte' : 'Se connecter'}
+          </button>
+        </p>
 
         <div className="login-sep"><span>ou</span></div>
 
