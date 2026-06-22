@@ -27,7 +27,7 @@ export function TransactionRow({ txn, category, onClick, showDate = true }: Tran
         </span>
       </div>
       <span className={clsx('txn-amount amount', income ? 'amount-pos' : 'amount-neg')}>
-        {formatSigned(txn.amount)}
+        {formatSigned(txn.amount, txn.currency)}
       </span>
     </button>
   )

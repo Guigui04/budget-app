@@ -1,34 +1,39 @@
 /** Formatting helpers — French locale, EUR by default. */
 
-const eur = new Intl.NumberFormat('fr-FR', {
-  style: 'currency',
-  currency: 'EUR',
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
+const DEFAULT_CURRENCY = 'EUR'
 
-const eurCompact = new Intl.NumberFormat('fr-FR', {
-  style: 'currency',
-  currency: 'EUR',
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0,
-})
+// Les formatteurs Intl sont coûteux à instancier : on les mémorise par
+// (devise, mode compact). EUR reste le cas par défaut ; toute autre devise
+// (compte/transaction étrangère) est gérée sans changement d'appelant.
+const formatterCache = new Map<string, Intl.NumberFormat>()
 
-export function formatMoney(amount: number, currency = 'EUR'): string {
-  if (currency !== 'EUR') {
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency }).format(amount)
+function moneyFormatter(currency: string, compact: boolean): Intl.NumberFormat {
+  const key = `${currency}:${compact ? 'c' : 'f'}`
+  let fmt = formatterCache.get(key)
+  if (!fmt) {
+    fmt = new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: compact ? 0 : 2,
+      maximumFractionDigits: compact ? 0 : 2,
+    })
+    formatterCache.set(key, fmt)
   }
-  return eur.format(amount)
+  return fmt
 }
 
-export function formatMoneyCompact(amount: number): string {
-  return eurCompact.format(amount)
+export function formatMoney(amount: number, currency = DEFAULT_CURRENCY): string {
+  return moneyFormatter(currency, false).format(amount)
+}
+
+export function formatMoneyCompact(amount: number, currency = DEFAULT_CURRENCY): string {
+  return moneyFormatter(currency, true).format(amount)
 }
 
 /** Signed amount with explicit + for income, used in transaction rows. */
-export function formatSigned(amount: number): string {
+export function formatSigned(amount: number, currency = DEFAULT_CURRENCY): string {
   const sign = amount > 0 ? '+' : ''
-  return `${sign}${eur.format(amount)}`
+  return `${sign}${moneyFormatter(currency, false).format(amount)}`
 }
 
 export function formatPercent(ratio: number): string {

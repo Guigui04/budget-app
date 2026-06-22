@@ -125,7 +125,7 @@ export function GoalSheet({ open, onClose, goal }: Props) {
           <option value="">Aucun compte lié</option>
           {savingsAccounts.map((account) => (
             <option key={account.id} value={account.id}>
-              {account.name} · {formatMoney(account.balance)}
+              {account.name} · {formatMoney(account.balance, account.currency)}
             </option>
           ))}
         </select>

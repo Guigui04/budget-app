@@ -1,11 +1,23 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   daysUntil,
+  formatMoney,
   formatPercent,
   formatSigned,
   isStale,
   maskIban,
 } from './format'
+
+describe('formatMoney (multi-devises)', () => {
+  it('utilise EUR par défaut', () => {
+    expect(formatMoney(12)).toContain('€')
+  })
+  it('respecte une autre devise', () => {
+    expect(formatMoney(12, 'USD')).toContain('$')
+    expect(formatSigned(12, 'USD')).toContain('$')
+    expect(formatSigned(12, 'USD').startsWith('+')).toBe(true)
+  })
+})
 
 describe('formatPercent', () => {
   it('arrondit le ratio en pourcentage', () => {

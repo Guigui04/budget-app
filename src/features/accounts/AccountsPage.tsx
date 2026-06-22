@@ -136,7 +136,7 @@ export function AccountsPage() {
                       <span className="account-iban num">{maskIban(a.iban)}</span>
                     </div>
                     <div className="account-right">
-                      <span className="account-balance num">{formatMoney(a.balance)}</span>
+                      <span className="account-balance num">{formatMoney(a.balance, a.currency)}</span>
                       <span className={`account-fresh ${stale ? 'stale' : ''}`}>
                         {stale && <AlertTriangle size={11} />} {formatRelative(a.balanceUpdatedAt)}
                       </span>

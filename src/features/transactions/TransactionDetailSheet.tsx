@@ -26,7 +26,7 @@ export function TransactionDetailSheet({ txn, categories, onClose }: Props) {
           <div className="detail-label">{txn.cleanLabel}</div>
           <div className="detail-meta">{formatDate(txn.bookingDate)}</div>
         </div>
-        <div className={`detail-amount amount ${txn.amount > 0 ? 'amount-pos' : ''}`}>{formatSigned(txn.amount)}</div>
+        <div className={`detail-amount amount ${txn.amount > 0 ? 'amount-pos' : ''}`}>{formatSigned(txn.amount, txn.currency)}</div>
       </div>
 
       <div className="detail-raw">
