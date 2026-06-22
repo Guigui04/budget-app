@@ -8,12 +8,15 @@ import { adminClient } from '../_shared/supabaseAdmin.ts'
 
 interface Tx {
   clean_label: string
+  raw_label: string
   amount: number
   booking_date: string
   category_id: string | null
 }
 
 const DAY = 86400000
+// Virements / remboursements : ce ne sont pas des abonnements récurrents.
+const TRANSFER_RE = /\b(VIR|VIREMENT|EMIS|RECU|REMBOURSEMENT|TIP|SEPA RECU)\b/i
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return preflight()
@@ -25,29 +28,48 @@ Deno.serve(async (req) => {
   for (const hh of households ?? []) {
     const { data: txns } = await db
       .from('transactions')
-      .select('clean_label,amount,booking_date,category_id')
+      .select('clean_label,raw_label,amount,booking_date,category_id')
       .eq('household_id', hh.id)
       .lt('amount', 0)
       .order('booking_date', { ascending: true })
 
     const groups = new Map<string, Tx[]>()
     for (const t of (txns ?? []) as Tx[]) {
+      if (TRANSFER_RE.test(t.raw_label)) continue // ignore les virements
       const key = t.clean_label.toLowerCase().trim()
+      if (!key) continue
       groups.set(key, [...(groups.get(key) ?? []), t])
     }
 
     for (const [, items] of groups) {
       if (items.length < 2) continue
-      const amounts = items.map((i) => Math.abs(i.amount))
-      const avg = amounts.reduce((a, b) => a + b, 0) / amounts.length
-      const consistent = amounts.every((a) => Math.abs(a - avg) / avg < 0.15)
-      if (!consistent) continue
 
-      const gaps = intervals(items.map((i) => new Date(i.booking_date).getTime()))
+      // Isole le montant RÉCURRENT du marchand (le plus fréquent), pour détecter
+      // un abonnement même quand le même marchand a aussi des achats ponctuels
+      // (ex. Google Play : abo Spotify 7,07 € + achats d'apps divers).
+      const byAmount = new Map<string, Tx[]>()
+      for (const it of items) {
+        const k = Math.abs(it.amount).toFixed(2)
+        byAmount.set(k, [...(byAmount.get(k) ?? []), it])
+      }
+      let recurring: Tx[] = []
+      for (const [, g] of byAmount) {
+        if (g.length > recurring.length) recurring = g
+      }
+      if (recurring.length < 2) continue
+
+      const avg = Math.abs(recurring[0].amount)
+
+      const gaps = intervals(recurring.map((i) => new Date(i.booking_date).getTime()))
       const frequency = inferFrequency(gaps)
       if (!frequency) continue
 
-      const last = items[items.length - 1]
+      // Seuil d'occurrences : 3 pour mensuel/annuel, 6 pour hebdo (rares, sinon
+      // les achats fréquents — café, ciné — passent pour des abonnements).
+      const minOccurrences = frequency === 'weekly' ? 6 : 3
+      if (recurring.length < minOccurrences) continue
+
+      const last = recurring[recurring.length - 1]
       const merchant = last.clean_label
       const { data: existing } = await db
         .from('subscriptions')
@@ -88,10 +110,13 @@ function intervals(times: number[]): number[] {
 
 function inferFrequency(gaps: number[]): 'weekly' | 'monthly' | 'yearly' | null {
   if (gaps.length === 0) return null
-  const avg = gaps.reduce((a, b) => a + b, 0) / gaps.length
-  if (avg >= 5 && avg <= 9) return 'weekly'
-  if (avg >= 26 && avg <= 35) return 'monthly'
-  if (avg >= 350 && avg <= 380) return 'yearly'
+  // Médiane : robuste à un mois sauté ou un écart aberrant.
+  const sorted = [...gaps].sort((a, b) => a - b)
+  const mid = Math.floor(sorted.length / 2)
+  const median = sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2
+  if (median >= 5 && median <= 9) return 'weekly'
+  if (median >= 26 && median <= 35) return 'monthly'
+  if (median >= 350 && median <= 380) return 'yearly'
   return null
 }
 
