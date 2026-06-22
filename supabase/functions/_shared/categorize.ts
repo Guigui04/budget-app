@@ -20,21 +20,34 @@ const KEYWORD_MAP: { keywords: string[]; category: string }[] = [
   { keywords: ['pharmacie', 'doctolib', 'medecin', 'hopital', 'dentiste', 'optique'], category: 'Santé' },
   { keywords: ['zara', 'h&m', 'decathlon', 'darty', 'fnac', 'amazon', 'zalando', 'sephora'], category: 'Shopping' },
   { keywords: ['hotel', 'airbnb', 'booking', 'ryanair', 'air france', 'easyjet'], category: 'Voyages' },
-  { keywords: ['salaire', 'vir salaire', 'paie'], category: 'Salaire' },
+  { keywords: ['salaire', 'vir salaire', 'remuneration', 'traitement paie'], category: 'Salaire' },
 ]
+
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+/**
+ * Match d'un mot-clé en MOT ENTIER (frontières de mot), pour éviter les faux
+ * positifs par sous-chaîne — ex. « paie » dans « PAIEMENT », « eau » dans
+ * « BUREAU », « gaz » dans « MAGAZINE ».
+ */
+function hasKeyword(haystack: string, keyword: string): boolean {
+  return new RegExp(`(^|[^a-z0-9])${escapeRegex(keyword)}([^a-z0-9]|$)`, 'i').test(haystack)
+}
 
 export function categorizeLabel(label: string, rules: Rule[]): string | null {
   const haystack = label.toLowerCase()
 
-  // 1) Règles utilisateur (priorité d'abord).
+  // 1) Règles utilisateur (priorité d'abord) — match en mot entier.
   const sorted = [...rules].sort((a, b) => a.priority - b.priority)
   for (const r of sorted) {
-    if (haystack.includes(r.match_pattern.toLowerCase())) return r.category_id // déjà un id
+    if (hasKeyword(haystack, r.match_pattern.toLowerCase())) return r.category_id // déjà un id
   }
 
   // 2) Heuristique par mots-clés → nom de catégorie par défaut.
   for (const entry of KEYWORD_MAP) {
-    if (entry.keywords.some((k) => haystack.includes(k))) return `name:${entry.category}`
+    if (entry.keywords.some((k) => hasKeyword(haystack, k))) return `name:${entry.category}`
   }
   return null
 }
