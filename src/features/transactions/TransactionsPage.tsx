@@ -17,9 +17,13 @@ export function TransactionsPage() {
   const [filter, setFilter] = useState<Filter>('all')
   const [search, setSearch] = useState('')
   const [accountId, setAccountId] = useState<string>('all')
-  const [selected, setSelected] = useState<Transaction | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const catMap = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories])
+
+  // On dérive l'opération sélectionnée de la liste à jour (et non d'une copie
+  // figée) pour que la fiche reflète la catégorie dès qu'elle change.
+  const selected = selectedId ? transactions.find((t) => t.id === selectedId) ?? null : null
 
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase()
@@ -91,7 +95,7 @@ export function TransactionsPage() {
                   txn={t}
                   category={t.categoryId ? catMap.get(t.categoryId) : undefined}
                   showDate={false}
-                  onClick={() => setSelected(t)}
+                  onClick={() => setSelectedId(t.id)}
                 />
               ))}
             </div>
@@ -99,7 +103,7 @@ export function TransactionsPage() {
         ))
       )}
 
-      <TransactionDetailSheet txn={selected} categories={categories} onClose={() => setSelected(null)} />
+      <TransactionDetailSheet txn={selected} categories={categories} onClose={() => setSelectedId(null)} />
     </div>
   )
 }
