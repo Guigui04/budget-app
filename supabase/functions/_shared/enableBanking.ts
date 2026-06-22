@@ -20,6 +20,23 @@ function b64url(bytes: Uint8Array): string {
   return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 }
 
+type AccountRef = string | { uid?: string }
+
+/** Normalise la liste de comptes EB (objets {uid} ou UID en chaînes) en UID. */
+function accountUids(accounts: AccountRef[] | undefined): string[] {
+  return (accounts ?? [])
+    .map((a) => (typeof a === 'string' ? a : a?.uid))
+    .filter((uid): uid is string => typeof uid === 'string' && uid.length > 0)
+}
+
+/** Devise valide (EB renvoie parfois "XXX" = inconnue) avec repli EUR. */
+function pickCurrency(...candidates: (string | undefined)[]): string {
+  for (const c of candidates) {
+    if (c && c !== 'XXX') return c
+  }
+  return 'EUR'
+}
+
 function pemToBinary(pem: string): ArrayBuffer {
   const body = pem.replace(/-----BEGIN [^-]+-----/, '').replace(/-----END [^-]+-----/, '').replace(/\s+/g, '')
   const raw = atob(body)
@@ -92,17 +109,19 @@ export class EnableBankingProvider implements BankProvider {
   async createSession(authCode: string): Promise<CreateSessionResult> {
     const data = await api<{
       session_id: string
-      accounts: { uid: string }[]
+      accounts: AccountRef[]
       access: { valid_until: string }
     }>(`/sessions`, { method: 'POST', body: JSON.stringify({ code: authCode }) })
 
-    const accounts = await Promise.all(data.accounts.map((a) => this.describeAccount(data.session_id, a.uid)))
+    const accounts = await Promise.all(accountUids(data.accounts).map((uid) => this.describeAccount(data.session_id, uid)))
     return { sessionId: data.session_id, accounts, consentExpiresAt: data.access.valid_until }
   }
 
   async getAccounts(sessionId: string): Promise<BankAccount[]> {
-    const data = await api<{ accounts: { uid: string }[] }>(`/sessions/${sessionId}`)
-    return Promise.all(data.accounts.map((a) => this.describeAccount(sessionId, a.uid)))
+    // Selon l'endpoint, `accounts` est une liste d'objets {uid} (POST /sessions)
+    // ou une liste d'UID en chaînes (GET /sessions/{id}). On gère les deux.
+    const data = await api<{ accounts: AccountRef[] }>(`/sessions/${sessionId}`)
+    return Promise.all(accountUids(data.accounts).map((uid) => this.describeAccount(sessionId, uid)))
   }
 
   private async describeAccount(_sessionId: string, accountUid: string): Promise<BankAccount> {
@@ -112,7 +131,7 @@ export class EnableBankingProvider implements BankProvider {
       currency?: string
       cash_account_type?: string
     }>(`/accounts/${accountUid}/details`)
-    const balances = await api<{ balances: { balance_amount: { amount: string }; balance_type: string }[] }>(
+    const balances = await api<{ balances: { balance_amount: { amount: string; currency?: string }; balance_type: string }[] }>(
       `/accounts/${accountUid}/balances`,
     )
     const main = balances.balances.find((b) => b.balance_type === 'CLBD') ?? balances.balances[0]
@@ -120,7 +139,7 @@ export class EnableBankingProvider implements BankProvider {
       externalAccountId: accountUid,
       name: details.name ?? 'Compte',
       iban: details.account_id?.iban,
-      currency: details.currency ?? 'EUR',
+      currency: pickCurrency(details.currency, main?.balance_amount.currency),
       balance: Number(main?.balance_amount.amount ?? 0),
       kind: details.cash_account_type === 'SVGS' ? 'savings' : 'checking',
     }

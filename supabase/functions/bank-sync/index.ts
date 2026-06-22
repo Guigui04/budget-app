@@ -117,10 +117,10 @@ Deno.serve(async (req) => {
       }
 
       report.push({ connection: conn.aspsp_name, imported, status: 'ok' })
-    } catch {
+    } catch (e) {
       await db.from('bank_connections').update({ status: 'error' }).eq('id', conn.id)
       await createAlert(db, conn.household_id, 'sync_error', { bank: conn.aspsp_name })
-      report.push({ connection: conn.aspsp_name, status: 'error' })
+      report.push({ connection: conn.aspsp_name, status: 'error', error: e instanceof Error ? e.message : String(e) })
     }
   }
 
