@@ -1,91 +1,190 @@
-/* ============ Fond Aurora animé ============ */
+/* ============ Fond Aurora — lumière colorée vue à travers une surface de verre ============ */
+/*
+ * Le « verre » combine : réfraction (filtre SVG #auroraGlass : turbulence +
+ * displacement → ondulations), givre (feGaussianBlur), reflets spéculaires animés,
+ * tranche lumineuse (biseau inset) et un grain de givre. Les formes ne bougent
+ * qu'en `transform` (GPU) ; le filtre de réfraction s'applique en une seule passe.
+ */
+.aurora-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
 .aurora {
   position: fixed;
   inset: 0;
   z-index: -2;
   overflow: hidden;
   pointer-events: none;
-  /* Base douce sous les halos pour garder du contraste avec les cartes. */
+  contain: layout paint style;
   background:
     radial-gradient(140% 100% at 50% -10%, var(--aurora-top), transparent 60%),
     linear-gradient(180deg, var(--bg-grad-1) 0%, var(--bg) 46%, var(--bg-grad-2) 100%);
+  /* Tranche / biseau du panneau de verre : reflet en haut, ombre interne douce. */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -40px 90px -40px rgba(0, 0, 0, 0.12);
+}
+
+/* --- Lumière colorée derrière le verre (réfractée) --- */
+.aurora-shapes {
+  position: absolute;
+  inset: -10%;
+  /* Réfraction + givre du verre, en une seule passe de filtre. */
+  filter: url(#auroraGlass);
 }
 
 .aurora-blob {
   position: absolute;
-  border-radius: 50%;
-  filter: blur(80px) saturate(130%);
-  opacity: 0.7;
+  opacity: 0.95;
   will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
   mix-blend-mode: var(--aurora-blend);
+  background: radial-gradient(circle at 42% 38%, var(--blob-color) 0%, var(--blob-color) 34%, transparent 70%);
 }
 
 .aurora-blob-1 {
-  top: -16%;
-  left: -12%;
-  width: 64vmin;
-  height: 64vmin;
-  background: radial-gradient(circle at 50% 50%, var(--aurora-1), transparent 68%);
-  animation: auroraDrift1 26s var(--ease-out) infinite alternate;
+  --blob-color: var(--aurora-1);
+  top: 0%; left: 2%;
+  width: 42vmin; height: 42vmin;
+  animation: drift1 18s ease-in-out infinite;
 }
-
 .aurora-blob-2 {
-  top: -6%;
-  right: -18%;
-  width: 58vmin;
-  height: 58vmin;
-  background: radial-gradient(circle at 50% 50%, var(--aurora-2), transparent 68%);
-  animation: auroraDrift2 32s var(--ease-out) infinite alternate;
+  --blob-color: var(--aurora-2);
+  top: -6%; right: 0%;
+  width: 38vmin; height: 38vmin;
+  animation: drift2 22s ease-in-out infinite;
 }
-
 .aurora-blob-3 {
-  bottom: -22%;
-  left: 4%;
-  width: 70vmin;
-  height: 70vmin;
-  background: radial-gradient(circle at 50% 50%, var(--aurora-3), transparent 70%);
-  animation: auroraDrift3 38s var(--ease-out) infinite alternate;
+  --blob-color: var(--aurora-3);
+  bottom: -4%; left: 6%;
+  width: 46vmin; height: 46vmin;
+  animation: drift3 16s ease-in-out infinite;
 }
-
 .aurora-blob-4 {
-  bottom: 2%;
-  right: -14%;
-  width: 52vmin;
-  height: 52vmin;
-  background: radial-gradient(circle at 50% 50%, var(--aurora-4), transparent 68%);
-  animation: auroraDrift4 30s var(--ease-out) infinite alternate;
+  --blob-color: var(--aurora-4);
+  bottom: 4%; right: 4%;
+  width: 36vmin; height: 36vmin;
+  animation: drift4 24s ease-in-out infinite;
+}
+.aurora-blob-5 {
+  --blob-color: var(--aurora-2);
+  top: 32%; left: 38%;
+  width: 34vmin; height: 34vmin;
+  opacity: 0.8;
+  animation: drift5 20s ease-in-out infinite;
 }
 
-/* Grain fin par-dessus les halos pour casser le banding du dégradé. */
-.aurora-grain {
+/* --- La surface de verre : reflets + givre par-dessus la lumière --- */
+.aurora-glass {
   position: absolute;
   inset: 0;
-  opacity: var(--grain-opacity);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.7'/%3E%3C/svg%3E");
+  isolation: isolate;
+  /* Léger dégradé de surface : haut plus clair (lumière rasante sur le verre). */
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.16) 0%,
+    transparent 26%,
+    transparent 74%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
 }
 
-@keyframes auroraDrift1 {
-  0% { transform: translate3d(0, 0, 0) scale(1); }
-  100% { transform: translate3d(14vmin, 10vmin, 0) scale(1.18); }
+/* Reflets spéculaires : larges traînées de lumière qui balaient la vitre. */
+.aurora-streak {
+  position: absolute;
+  top: -40%;
+  left: 0;
+  width: 42vmax;
+  height: 180%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.10) 42%,
+    rgba(255, 255, 255, 0.26) 50%,
+    rgba(255, 255, 255, 0.10) 58%,
+    transparent 100%
+  );
+  filter: blur(10px);
+  mix-blend-mode: screen;
+  will-change: transform;
 }
 
-@keyframes auroraDrift2 {
-  0% { transform: translate3d(0, 0, 0) scale(1.05); }
-  100% { transform: translate3d(-12vmin, 14vmin, 0) scale(0.92); }
+.aurora-streak-1 {
+  transform: rotate(16deg);
+  animation: streak1 17s var(--ease-out) infinite;
 }
 
-@keyframes auroraDrift3 {
-  0% { transform: translate3d(0, 0, 0) scale(0.95); }
-  100% { transform: translate3d(16vmin, -12vmin, 0) scale(1.16); }
+.aurora-streak-2 {
+  transform: rotate(16deg);
+  opacity: 0.7;
+  animation: streak2 26s var(--ease-out) infinite;
 }
 
-@keyframes auroraDrift4 {
-  0% { transform: translate3d(0, 0, 0) scale(1.1); }
-  100% { transform: translate3d(-14vmin, -8vmin, 0) scale(0.94); }
+/* Givre fin du verre : micro-texture par-dessus (différente du bruit grossier). */
+.aurora-frost {
+  position: absolute;
+  inset: 0;
+  opacity: var(--frost-opacity, 0.5);
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)' opacity='0.6'/%3E%3C/svg%3E");
+  background-size: 140px 140px;
 }
 
+/* --- Déplacements organiques des formes (boucles errantes, GPU) --- */
+@keyframes drift1 {
+  0%   { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+  25%  { transform: translate3d(18vmin, 10vmin, 0) scale(1.12) rotate(8deg); }
+  50%  { transform: translate3d(30vmin, 26vmin, 0) scale(1.04) rotate(-6deg); }
+  75%  { transform: translate3d(10vmin, 16vmin, 0) scale(1.16) rotate(7deg); }
+  100% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+}
+@keyframes drift2 {
+  0%   { transform: translate3d(0, 0, 0) scale(1.05) rotate(0deg); }
+  25%  { transform: translate3d(-22vmin, 12vmin, 0) scale(0.9) rotate(-8deg); }
+  50%  { transform: translate3d(-34vmin, 30vmin, 0) scale(1.1) rotate(6deg); }
+  75%  { transform: translate3d(-14vmin, 20vmin, 0) scale(0.96) rotate(-5deg); }
+  100% { transform: translate3d(0, 0, 0) scale(1.05) rotate(0deg); }
+}
+@keyframes drift3 {
+  0%   { transform: translate3d(0, 0, 0) scale(0.95) rotate(0deg); }
+  25%  { transform: translate3d(20vmin, -14vmin, 0) scale(1.14) rotate(6deg); }
+  50%  { transform: translate3d(34vmin, -30vmin, 0) scale(1.04) rotate(-7deg); }
+  75%  { transform: translate3d(14vmin, -12vmin, 0) scale(1.18) rotate(8deg); }
+  100% { transform: translate3d(0, 0, 0) scale(0.95) rotate(0deg); }
+}
+@keyframes drift4 {
+  0%   { transform: translate3d(0, 0, 0) scale(1.1) rotate(0deg); }
+  25%  { transform: translate3d(-16vmin, -12vmin, 0) scale(0.92) rotate(-7deg); }
+  50%  { transform: translate3d(-30vmin, -26vmin, 0) scale(1.08) rotate(6deg); }
+  75%  { transform: translate3d(-12vmin, -16vmin, 0) scale(0.94) rotate(-8deg); }
+  100% { transform: translate3d(0, 0, 0) scale(1.1) rotate(0deg); }
+}
+@keyframes drift5 {
+  0%   { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+  25%  { transform: translate3d(22vmin, -16vmin, 0) scale(1.16) rotate(9deg); }
+  50%  { transform: translate3d(-8vmin, -28vmin, 0) scale(1.22) rotate(-8deg); }
+  75%  { transform: translate3d(-20vmin, -8vmin, 0) scale(1.08) rotate(7deg); }
+  100% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+}
+
+/* --- Reflets qui traversent la vitre (en diagonale) --- */
+@keyframes streak1 {
+  0%   { transform: translateX(-60vw) rotate(16deg); }
+  100% { transform: translateX(170vw) rotate(16deg); }
+}
+@keyframes streak2 {
+  0%   { transform: translateX(-90vw) rotate(16deg); }
+  100% { transform: translateX(150vw) rotate(16deg); }
+}
+
+/* Accessibilité : on fige tout mouvement si l'utilisateur le demande. */
 @media (prefers-reduced-motion: reduce) {
-  .aurora-blob {
+  .aurora-blob,
+  .aurora-streak {
     animation: none !important;
   }
 }

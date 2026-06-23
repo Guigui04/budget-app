@@ -105,13 +105,16 @@
   --grain-opacity: 0.02;
   --grid-line: rgba(124, 92, 255, 0.05);
 
-  /* Fond Aurora — halos TRÈS subtils sur fond clair (les cartes blanches priment) */
-  --aurora-top: rgba(255, 255, 255, 0.6);
+  /* Fond Aurora — formes colorées visibles à travers le verre dépoli (style Revolut) */
+  --aurora-top: rgba(255, 255, 255, 0.45);
   --aurora-blend: normal;
-  --aurora-1: rgba(140, 108, 255, 0.20);
-  --aurora-2: rgba(236, 160, 224, 0.18);
-  --aurora-3: rgba(140, 170, 255, 0.16);
-  --aurora-4: rgba(186, 150, 255, 0.16);
+  /* Voile du verre dépoli posé sur les formes (frosted glass) — léger pour laisser
+     les couleurs transparaître. */
+  --aurora-veil: rgba(247, 244, 252, 0.08);
+  --aurora-1: rgba(140, 108, 255, 0.62);
+  --aurora-2: rgba(240, 130, 214, 0.55);
+  --aurora-3: rgba(120, 162, 255, 0.52);
+  --aurora-4: rgba(180, 132, 255, 0.55);
 
   /* Dock flottant blanc, propre — contrasté sur le fond clair */
   --dock-bg: rgba(255, 255, 255, 0.94);
@@ -183,6 +186,8 @@
   /* Fond Aurora — sur fond sombre, blend screen pour un effet « néon doux » */
   --aurora-top: rgba(50, 38, 84, 0.55);
   --aurora-blend: screen;
+  /* Voile du verre dépoli posé sur les formes (frosted glass). */
+  --aurora-veil: rgba(11, 9, 19, 0.26);
   --aurora-1: rgba(124, 92, 255, 0.40);
   --aurora-2: rgba(196, 110, 206, 0.30);
   --aurora-3: rgba(92, 124, 224, 0.32);
