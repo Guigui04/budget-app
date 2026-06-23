@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
+import { Aurora } from '@/components/layout/Aurora'
 import { RouteFallback } from '@/components/layout/RouteFallback'
 import { UnlockScreen } from '@/features/auth/UnlockScreen'
 import { useSession } from '@/store/session'
@@ -55,10 +56,16 @@ export default function App() {
   }, [initialize, preference])
 
   // Verrou PIN : tant que l'app est verrouillée, rien d'autre n'est rendu.
-  if (locked) return <UnlockScreen />
+  if (locked) return (
+    <>
+      <Aurora />
+      <UnlockScreen />
+    </>
+  )
 
   return (
     <QueryClientProvider client={queryClient}>
+      <Aurora />
       <BrowserRouter>
         <Suspense fallback={<RouteFallback />}>
           <Routes>

@@ -10,9 +10,10 @@
 
   --r-xs: 8px;
   --r-sm: 12px;
-  --r-md: 14px;
-  --r-lg: 20px;
+  --r-md: 16px;
+  --r-lg: 24px;
   --r-xl: 30px;
+  --r-2xl: 34px;
   --r-full: 999px;
 
   --sp-1: 4px;
@@ -44,13 +45,13 @@
 [data-theme='light'] {
   color-scheme: light;
 
-  --bg: #f3f1fb;
-  --bg-grad-1: #ece6fe;
-  --bg-grad-2: #faeefb;
+  --bg: #f1eef9;
+  --bg-grad-1: #ece7fa;
+  --bg-grad-2: #f7f1fc;
   --surface: rgba(255, 255, 255, 0.72);
   --surface-solid: #ffffff;
-  --surface-2: #f1ecfb;
-  --surface-sunk: #e8e1f7;
+  --surface-2: #f4f1fc;
+  --surface-sunk: #ebe5f8;
 
   --text: #1a1530;
   --text-muted: #6a6483;
@@ -94,14 +95,29 @@
   --blob-2: rgba(236, 150, 224, 0.26);
   --blob-3: rgba(150, 180, 255, 0.22);
 
-  --shadow-sm: 0 1px 2px rgba(50, 34, 92, 0.05), 0 10px 26px rgba(80, 56, 140, 0.07);
-  --shadow-md: 0 18px 44px rgba(80, 56, 140, 0.12), 0 2px 8px rgba(80, 56, 140, 0.06);
-  --shadow-lg: 0 36px 90px rgba(46, 30, 90, 0.20), 0 12px 30px rgba(46, 30, 90, 0.12);
-  --shadow-glow: 0 26px 70px -26px rgba(124, 92, 255, 0.6);
-  --shadow-card: 0 24px 60px -20px rgba(124, 92, 255, 0.42);
+  /* Ombres très douces & diffuses, teintées lavande (style cartes flottantes) */
+  --shadow-sm: 0 2px 8px rgba(80, 56, 140, 0.05), 0 1px 2px rgba(80, 56, 140, 0.04);
+  --shadow-md: 0 10px 30px rgba(80, 56, 140, 0.09), 0 2px 6px rgba(80, 56, 140, 0.05);
+  --shadow-lg: 0 28px 64px rgba(46, 30, 90, 0.14), 0 8px 20px rgba(46, 30, 90, 0.08);
+  --shadow-glow: 0 18px 44px -18px rgba(124, 92, 255, 0.55);
+  --shadow-card: 0 22px 48px -18px rgba(124, 92, 255, 0.45);
 
-  --grain-opacity: 0.025;
+  --grain-opacity: 0.02;
   --grid-line: rgba(124, 92, 255, 0.05);
+
+  /* Fond Aurora — halos TRÈS subtils sur fond clair (les cartes blanches priment) */
+  --aurora-top: rgba(255, 255, 255, 0.6);
+  --aurora-blend: normal;
+  --aurora-1: rgba(140, 108, 255, 0.20);
+  --aurora-2: rgba(236, 160, 224, 0.18);
+  --aurora-3: rgba(140, 170, 255, 0.16);
+  --aurora-4: rgba(186, 150, 255, 0.16);
+
+  /* Dock flottant blanc, propre — contrasté sur le fond clair */
+  --dock-bg: rgba(255, 255, 255, 0.94);
+  --dock-border: rgba(26, 21, 48, 0.06);
+  --dock-shadow: 0 16px 40px -12px rgba(80, 56, 140, 0.26), 0 4px 12px rgba(80, 56, 140, 0.10);
+  --dock-ring: inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 [data-theme='dark'] {
@@ -161,6 +177,19 @@
   --shadow-glow: 0 26px 78px -26px rgba(169, 139, 255, 0.6);
   --shadow-card: 0 24px 60px -20px rgba(0, 0, 0, 0.6);
 
-  --grain-opacity: 0.04;
+  --grain-opacity: 0.05;
   --grid-line: rgba(169, 139, 255, 0.06);
+
+  /* Fond Aurora — sur fond sombre, blend screen pour un effet « néon doux » */
+  --aurora-top: rgba(50, 38, 84, 0.55);
+  --aurora-blend: screen;
+  --aurora-1: rgba(124, 92, 255, 0.40);
+  --aurora-2: rgba(196, 110, 206, 0.30);
+  --aurora-3: rgba(92, 124, 224, 0.32);
+  --aurora-4: rgba(150, 108, 255, 0.34);
+
+  --dock-bg: linear-gradient(180deg, rgba(38, 30, 52, 0.97), rgba(24, 19, 34, 0.92));
+  --dock-border: rgba(255, 255, 255, 0.12);
+  --dock-shadow: 0 26px 64px -16px rgba(0, 0, 0, 0.82), 0 6px 18px rgba(0, 0, 0, 0.6);
+  --dock-ring: inset 0 1px 0 rgba(255, 255, 255, 0.10);
 }

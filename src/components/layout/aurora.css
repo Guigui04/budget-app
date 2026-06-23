@@ -1,0 +1,91 @@
+/* ============ Fond Aurora animé ============ */
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  overflow: hidden;
+  pointer-events: none;
+  /* Base douce sous les halos pour garder du contraste avec les cartes. */
+  background:
+    radial-gradient(140% 100% at 50% -10%, var(--aurora-top), transparent 60%),
+    linear-gradient(180deg, var(--bg-grad-1) 0%, var(--bg) 46%, var(--bg-grad-2) 100%);
+}
+
+.aurora-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px) saturate(130%);
+  opacity: 0.7;
+  will-change: transform;
+  mix-blend-mode: var(--aurora-blend);
+}
+
+.aurora-blob-1 {
+  top: -16%;
+  left: -12%;
+  width: 64vmin;
+  height: 64vmin;
+  background: radial-gradient(circle at 50% 50%, var(--aurora-1), transparent 68%);
+  animation: auroraDrift1 26s var(--ease-out) infinite alternate;
+}
+
+.aurora-blob-2 {
+  top: -6%;
+  right: -18%;
+  width: 58vmin;
+  height: 58vmin;
+  background: radial-gradient(circle at 50% 50%, var(--aurora-2), transparent 68%);
+  animation: auroraDrift2 32s var(--ease-out) infinite alternate;
+}
+
+.aurora-blob-3 {
+  bottom: -22%;
+  left: 4%;
+  width: 70vmin;
+  height: 70vmin;
+  background: radial-gradient(circle at 50% 50%, var(--aurora-3), transparent 70%);
+  animation: auroraDrift3 38s var(--ease-out) infinite alternate;
+}
+
+.aurora-blob-4 {
+  bottom: 2%;
+  right: -14%;
+  width: 52vmin;
+  height: 52vmin;
+  background: radial-gradient(circle at 50% 50%, var(--aurora-4), transparent 68%);
+  animation: auroraDrift4 30s var(--ease-out) infinite alternate;
+}
+
+/* Grain fin par-dessus les halos pour casser le banding du dégradé. */
+.aurora-grain {
+  position: absolute;
+  inset: 0;
+  opacity: var(--grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.7'/%3E%3C/svg%3E");
+}
+
+@keyframes auroraDrift1 {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(14vmin, 10vmin, 0) scale(1.18); }
+}
+
+@keyframes auroraDrift2 {
+  0% { transform: translate3d(0, 0, 0) scale(1.05); }
+  100% { transform: translate3d(-12vmin, 14vmin, 0) scale(0.92); }
+}
+
+@keyframes auroraDrift3 {
+  0% { transform: translate3d(0, 0, 0) scale(0.95); }
+  100% { transform: translate3d(16vmin, -12vmin, 0) scale(1.16); }
+}
+
+@keyframes auroraDrift4 {
+  0% { transform: translate3d(0, 0, 0) scale(1.1); }
+  100% { transform: translate3d(-14vmin, -8vmin, 0) scale(0.94); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-blob {
+    animation: none !important;
+  }
+}

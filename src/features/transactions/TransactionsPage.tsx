@@ -6,6 +6,7 @@ import { TransactionDetailSheet } from './TransactionDetailSheet'
 import { Segmented } from '@/components/ui/Segmented'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatDate } from '@/lib/format'
+import { haptic } from '@/lib/haptics'
 import type { Transaction } from '@/types'
 
 type Filter = 'all' | 'expense' | 'income' | 'todo'
@@ -105,7 +106,7 @@ export function TransactionsPage() {
                   txn={t}
                   category={t.categoryId ? catMap.get(t.categoryId) : undefined}
                   showDate={false}
-                  onClick={() => setSelectedId(t.id)}
+                  onClick={() => { haptic('tap'); setSelectedId(t.id) }}
                 />
               ))}
             </div>
@@ -114,7 +115,7 @@ export function TransactionsPage() {
       )}
 
       {remaining > 0 && (
-        <button className="load-more" onClick={() => setVisibleCount((c) => c + PAGE)}>
+        <button className="load-more" onClick={() => { haptic('tap'); setVisibleCount((c) => c + PAGE) }}>
           Voir plus <span className="load-more-count">{remaining}</span>
         </button>
       )}

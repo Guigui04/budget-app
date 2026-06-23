@@ -5,6 +5,7 @@ import { activeSubscriptionsMonthlyCost } from '@/data/selectors'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatMoney, formatMoneyCompact, formatDateShort, daysUntil } from '@/lib/format'
+import { haptic } from '@/lib/haptics'
 
 const freqLabel: Record<string, string> = { monthly: '/mois', yearly: '/an', weekly: '/sem.' }
 
@@ -42,8 +43,8 @@ export function SubscriptionsPage() {
                     <span className="sub-meta num">{formatMoney(s.amount)}{freqLabel[s.frequency]} · détecté</span>
                   </div>
                   <div className="sub-actions">
-                    <button className="sub-act reject" onClick={() => update.mutate({ id: s.id, isActive: false, isConfirmed: true })} aria-label="Rejeter"><X size={18} /></button>
-                    <button className="sub-act confirm" onClick={() => update.mutate({ id: s.id, isConfirmed: true })} aria-label="Confirmer"><Check size={18} /></button>
+                    <button className="sub-act reject" onClick={() => { haptic('tap'); update.mutate({ id: s.id, isActive: false, isConfirmed: true }) }} aria-label="Rejeter"><X size={18} /></button>
+                    <button className="sub-act confirm" onClick={() => { haptic('success'); update.mutate({ id: s.id, isConfirmed: true }) }} aria-label="Confirmer"><Check size={18} /></button>
                   </div>
                 </div>
               )
@@ -73,7 +74,7 @@ export function SubscriptionsPage() {
                   </div>
                   <div className="sub-right">
                     <span className="sub-amount num">{formatMoney(s.amount)}<small>{freqLabel[s.frequency]}</small></span>
-                    <button className={`toggle ${s.isActive ? 'on' : ''}`} onClick={() => update.mutate({ id: s.id, isActive: !s.isActive })} aria-label="Activer/désactiver">
+                    <button className={`toggle ${s.isActive ? 'on' : ''}`} onClick={() => { haptic('selection'); update.mutate({ id: s.id, isActive: !s.isActive }) }} aria-label="Activer/désactiver">
                       <span className="toggle-knob" />
                     </button>
                   </div>

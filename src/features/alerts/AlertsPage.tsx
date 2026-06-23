@@ -2,6 +2,7 @@ import { BellOff, CheckCheck, AlertCircle } from 'lucide-react'
 import { useAlerts, useMarkAlertRead } from '@/data/hooks'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatRelative } from '@/lib/format'
+import { haptic } from '@/lib/haptics'
 import { alertCopy } from './alertCopy'
 
 export function AlertsPage() {
@@ -14,7 +15,7 @@ export function AlertsPage() {
       <div className="row-head rise">
         <h2 className="block-title">{unread > 0 ? `${unread} non lues` : 'À jour'}</h2>
         {unread > 0 && (
-          <button className="link-btn" onClick={() => mark.mutate({ all: true })}>
+          <button className="link-btn" onClick={() => { haptic('success'); mark.mutate({ all: true }) }}>
             <CheckCheck size={16} /> Tout marquer lu
           </button>
         )}
@@ -31,7 +32,7 @@ export function AlertsPage() {
                 key={a.id}
                 className={`card card-pad alert-item rise ${a.isRead ? 'read' : ''}`}
                 style={{ animationDelay: `${i * 40}ms` }}
-                onClick={() => mark.mutate({ id: a.id })}
+                onClick={() => { if (!a.isRead) haptic('tap'); mark.mutate({ id: a.id }) }}
               >
                 <span className="alert-icon" style={{ background: `${copy.color}22`, color: copy.color }}>
                   <AlertCircle size={18} />

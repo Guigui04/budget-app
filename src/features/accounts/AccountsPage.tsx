@@ -6,6 +6,7 @@ import { totalBalance } from '@/data/selectors'
 import { Button } from '@/components/ui/Button'
 import { ConnectBankSheet } from './ConnectBankSheet'
 import { formatMoney, formatBalanceParts, maskIban, formatRelative, isStale, daysUntil } from '@/lib/format'
+import { haptic } from '@/lib/haptics'
 
 export function AccountsPage() {
   const { data: accounts = [] } = useAccounts()
@@ -64,6 +65,7 @@ export function AccountsPage() {
   }, [callback, searchParams, setSearchParams])
 
   function refreshNow() {
+    haptic('success')
     setSyncMessage(null)
     sync.mutate(undefined, {
       onSuccess: (result) => {
@@ -78,6 +80,7 @@ export function AccountsPage() {
   }
 
   function removeConnection(connectionId: string, bankName: string) {
+    haptic('warning')
     const confirmed = window.confirm(
       `Supprimer ${bankName} ? Les comptes, transactions et données associées à cette connexion seront supprimés.`,
     )

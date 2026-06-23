@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, Palette, Landmark, ShieldCheck, LogOut, Smartphone, ChevronRight, UserRound } from 'lucide-react'
+import { Bell, Palette, Landmark, ShieldCheck, LogOut, Smartphone, ChevronRight, UserRound, Vibrate } from 'lucide-react'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { Avatar } from '@/components/ui/Avatar'
 import { useSession } from '@/store/session'
@@ -8,6 +8,7 @@ import { usePrefs } from '@/store/prefs'
 import { useSavePushSubscription, useUpdateProfile } from '@/data/hooks'
 import { demoUsers } from '@/data/demo'
 import { requestPushSubscription, type PushOutcome } from '@/lib/push'
+import { haptic, areHapticsEnabled, setHapticsEnabled } from '@/lib/haptics'
 import { Button } from '@/components/ui/Button'
 import { PinSettings } from './PinSettings'
 import type { AlertType } from '@/types'
@@ -40,6 +41,14 @@ export function SettingsPage() {
   const [displayName, setDisplayName] = useState(user?.displayName ?? '')
   const [householdName, setHouseholdName] = useState(household?.name ?? '')
   const [profileMessage, setProfileMessage] = useState<string | null>(null)
+  const [hapticsOn, setHapticsOn] = useState(areHapticsEnabled())
+
+  function toggleHaptics() {
+    const next = !hapticsOn
+    setHapticsEnabled(next)
+    setHapticsOn(next)
+    if (next) haptic('success')
+  }
 
   async function enablePush() {
     const result = await requestPushSubscription()
@@ -127,6 +136,23 @@ export function SettingsPage() {
         </div>
       </section>
 
+      <section className="settings-group rise" style={{ animationDelay: '75ms' }}>
+        <div className="settings-head"><Vibrate size={16} /> Retour haptique</div>
+        <div className="card">
+          <div className="settings-row">
+            <span className="settings-row-label">Vibrations au toucher</span>
+            <button
+              className={`toggle ${hapticsOn ? 'on' : ''}`}
+              onClick={toggleHaptics}
+              aria-label="Retour haptique"
+              aria-pressed={hapticsOn}
+            >
+              <span className="toggle-knob" />
+            </button>
+          </div>
+        </div>
+      </section>
+
       <section className="settings-group rise" style={{ animationDelay: '100ms' }}>
         <div className="settings-head"><Bell size={16} /> Notifications</div>
         <div className="card">
@@ -146,7 +172,7 @@ export function SettingsPage() {
               <span className="settings-row-label">{alertLabels[type]}</span>
               <button
                 className={`toggle ${alertPrefs[type] ? 'on' : ''}`}
-                onClick={() => toggleAlert(type)}
+                onClick={() => { haptic('selection'); toggleAlert(type) }}
                 aria-label={alertLabels[type]}
               >
                 <span className="toggle-knob" />
@@ -176,7 +202,7 @@ export function SettingsPage() {
         </div>
       </section>
 
-      <button className="signout-btn rise" style={{ animationDelay: '240ms' }} onClick={() => { signOut(); navigate('/login') }}>
+      <button className="signout-btn rise" style={{ animationDelay: '240ms' }} onClick={() => { haptic('warning'); signOut(); navigate('/login') }}>
         <LogOut size={18} /> Se déconnecter
       </button>
 

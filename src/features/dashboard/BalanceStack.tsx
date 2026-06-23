@@ -1,66 +1,95 @@
+import { useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
-import { ArrowDownLeft, ArrowUpRight, CreditCard } from 'lucide-react'
-import { formatBalanceParts, formatMoneyCompact, formatRelative } from '@/lib/format'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import type { Account } from '@/types'
+import { formatBalanceParts, formatRelative, maskIban } from '@/lib/format'
 import { useCountUp } from '@/lib/useCountUp'
+import { haptic } from '@/lib/haptics'
 
 interface BalanceStackProps {
-  balance: number
-  income: number
-  spending: number
-  accountsCount: number
+  accounts: Account[]
   lastSync: string
   stale: boolean
-  onClick: () => void
+  onOpenAccounts: () => void
+}
+
+interface View {
+  label: string
+  value: number
+  sub: string
 }
 
 /**
- * Carte solde en « deck » empilé (inspiration onebank) : des cartes fantômes
- * dépassent derrière la carte principale pour un effet de profondeur. Le solde
- * compte vers le haut à l'apparition.
+ * Carte solde — pièce maîtresse du dashboard. Allure de carte bancaire (dégradé
+ * violet, deck empilé façon onebank), solde en très grande typo, carrousel pour
+ * passer du total du foyer à chaque compte (cf. inspirations).
  */
-export function BalanceStack({ balance, income, spending, accountsCount, lastSync, stale, onClick }: BalanceStackProps) {
+export function BalanceStack({ accounts, lastSync, stale, onOpenAccounts }: BalanceStackProps) {
   const reduce = useReducedMotion()
-  const animated = useCountUp(balance)
+  const [index, setIndex] = useState(0)
+
+  const total = accounts.reduce((s, a) => s + a.balance, 0)
+  const views: View[] = [
+    { label: 'Solde du foyer', value: total, sub: `${accounts.length} compte${accounts.length > 1 ? 's' : ''}` },
+    ...accounts.map((a) => ({ label: a.name, value: a.balance, sub: maskIban(a.iban) })),
+  ]
+  const view = views[Math.min(index, views.length - 1)]
+  const multi = views.length > 1
+
+  const animated = useCountUp(view.value)
   const bal = formatBalanceParts(animated)
-  const flow = income + spending
-  const incomeShare = flow > 0 ? income / flow : 0.5
+
+  const move = (dir: number) => () => {
+    haptic('selection')
+    setIndex((i) => (i + dir + views.length) % views.length)
+  }
 
   return (
     <div className="balance-stack rise" style={{ animationDelay: '20ms' }}>
       <span className="bstack-ghost bstack-ghost-2" aria-hidden="true" />
       <span className="bstack-ghost bstack-ghost-1" aria-hidden="true" />
 
-      <motion.button
-        type="button"
-        className="hero-card"
-        onClick={onClick}
+      <motion.div
+        className="hcard"
         initial={reduce ? false : { opacity: 0, y: 16, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ type: 'spring', stiffness: 280, damping: 26 }}
-        whileTap={reduce ? undefined : { scale: 0.985 }}
       >
-        <div className="hero-top">
-          <span className="section-label">Solde total du foyer</span>
-          <span className="hero-chip"><CreditCard size={15} /> {accountsCount} compte{accountsCount > 1 ? 's' : ''}</span>
+        <div className="hcard-shine" aria-hidden="true" />
+
+        <div className="hcard-top">
+          <span className="hcard-label">{view.label}</span>
+          {multi && (
+            <div className="hcard-nav">
+              <button type="button" aria-label="Compte précédent" onClick={move(-1)}><ChevronLeft size={18} /></button>
+              <button type="button" aria-label="Compte suivant" onClick={move(1)}><ChevronRight size={18} /></button>
+            </div>
+          )}
         </div>
 
-        <div className="hero-amount num">
-          {bal.sign}{bal.whole}<span className="hero-amount-cents">,{bal.cents} €</span>
-        </div>
-        <span className={`hero-fresh ${stale ? 'stale' : ''}`}>
-          {stale ? 'Données à actualiser' : `Mis à jour ${formatRelative(lastSync)}`}
-        </span>
+        <button
+          type="button"
+          className="hcard-amount num"
+          onClick={() => { haptic('tap'); onOpenAccounts() }}
+        >
+          {bal.sign}{bal.whole}<span className="hcard-cents">,{bal.cents} €</span>
+        </button>
 
-        <div className="hero-flow">
-          <div className="hero-flow-bar">
-            <span className="hero-flow-in" style={{ width: `${incomeShare * 100}%` }} />
-          </div>
-          <div className="hero-flow-legend">
-            <span className="hero-flow-item"><ArrowDownLeft size={14} /> Entrées <b className="num">{formatMoneyCompact(income)}</b></span>
-            <span className="hero-flow-item out"><ArrowUpRight size={14} /> Sorties <b className="num">{formatMoneyCompact(spending)}</b></span>
-          </div>
+        <div className="hcard-foot">
+          <span className="hcard-chip">{view.sub}</span>
+          <span className={`hcard-fresh ${stale ? 'stale' : ''}`}>
+            {stale ? 'À actualiser' : `MAJ ${formatRelative(lastSync)}`}
+          </span>
         </div>
-      </motion.button>
+
+        {multi && (
+          <div className="hcard-dots" aria-hidden="true">
+            {views.map((_, i) => (
+              <span key={i} className={i === index ? 'active' : ''} />
+            ))}
+          </div>
+        )}
+      </motion.div>
     </div>
   )
 }

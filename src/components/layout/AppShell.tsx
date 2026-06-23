@@ -38,7 +38,7 @@ export function AppShell() {
   }
   const isHome = pathname === '/'
   const title = titles[pathname] ?? t.common.appName
-  const greeting = isHome && user ? `${greetingForHour(t)}, ${user.displayName}` : undefined
+  const greeting = isHome && user ? greetingForHour(t) : undefined
 
   // Sens du glissement : avancer dans la nav = vers la gauche, reculer = droite.
   // Pattern officiel React : ajuster l'état pendant le rendu quand la route change.
@@ -51,8 +51,7 @@ export function AppShell() {
 
   return (
     <div className="app-shell">
-      <div className="shell-ledger" aria-hidden="true" />
-      <TopBar title={title} greeting={greeting} />
+      <TopBar title={title} greeting={greeting} isHome={isHome} />
       <AnimatePresence mode="wait" initial={false}>
         <motion.main
           key={pathname}

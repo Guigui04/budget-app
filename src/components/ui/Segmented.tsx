@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { haptic } from '@/lib/haptics'
 
 interface SegmentedOption<T extends string> {
   value: T
@@ -20,7 +21,7 @@ export function Segmented<T extends string>({ options, value, onChange }: Segmen
           role="tab"
           aria-selected={value === opt.value}
           className={clsx(value === opt.value && 'active')}
-          onClick={() => onChange(opt.value)}
+          onClick={() => { if (opt.value !== value) haptic('selection'); onChange(opt.value) }}
         >
           {opt.label}
         </button>

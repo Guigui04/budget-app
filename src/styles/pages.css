@@ -768,11 +768,9 @@
   padding: 0 var(--sp-4);
   border: 1px solid var(--border);
   border-radius: var(--r-full);
-  background: var(--glass);
+  background: var(--surface-solid);
   color: var(--text-muted);
   box-shadow: var(--shadow-sm);
-  backdrop-filter: blur(18px) saturate(150%);
-  -webkit-backdrop-filter: blur(18px) saturate(150%);
 }
 
 .search-bar:focus-within {
@@ -2190,4 +2188,383 @@
   color: var(--hero-sub);
   font-size: 0.82rem;
   font-weight: 600;
+}
+
+/* ============ Bannière « à classer » (dashboard) ============ */
+.todo-nudge {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-lg);
+  text-align: left;
+  color: var(--text);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--info-soft) 90%, transparent), transparent 60%),
+    var(--glass);
+  border: 1px solid color-mix(in srgb, var(--info) 22%, var(--border));
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast);
+}
+
+.todo-nudge:active {
+  transform: scale(var(--press-scale));
+}
+
+.todo-nudge-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-sm);
+  background: var(--info-soft);
+  color: var(--info);
+  flex-shrink: 0;
+}
+
+.todo-nudge-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.todo-nudge-title {
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.todo-nudge-sub {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.todo-nudge > svg {
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
+
+/* ============ Feuille d'actions rapides (dock central) ============ */
+.qa-sheet-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+
+.qa-sheet-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: var(--sp-4) var(--sp-3);
+  border-radius: var(--r-lg);
+  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
+  border: 1px solid var(--border);
+  text-align: left;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    background var(--dur-fast),
+    border-color var(--dur-fast),
+    box-shadow var(--dur-fast);
+}
+
+.qa-sheet-tile:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+.qa-sheet-tile:active {
+  transform: scale(var(--press-scale));
+}
+
+.qa-sheet-tile:disabled {
+  opacity: 0.6;
+}
+
+.qa-sheet-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-md);
+}
+
+.qa-sheet-label {
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.qa-sheet-hint {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  line-height: 1.15;
+}
+
+/* ============ Carte solde « hcard » (dashboard refonte) ============ */
+.hcard {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  width: 100%;
+  border-radius: var(--r-xl);
+  padding: var(--sp-6);
+  color: var(--hero-ink);
+  background:
+    radial-gradient(120% 90% at 12% 6%, rgba(255, 255, 255, 0.24), transparent 46%),
+    radial-gradient(90% 80% at 96% 100%, rgba(255, 255, 255, 0.12), transparent 52%),
+    var(--hero-grad);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255, 255, 255, 0.34);
+}
+
+.hcard-shine {
+  position: absolute;
+  right: -60px;
+  top: -90px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.22), transparent 60%);
+  pointer-events: none;
+}
+
+.hcard-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.hcard-label {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.82);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hcard-nav {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.hcard-nav button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-full);
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: var(--hero-ink);
+  transition: transform var(--dur-fast) var(--ease-out), background var(--dur-fast);
+}
+
+.hcard-nav button:active {
+  transform: scale(0.88);
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.hcard-amount {
+  display: block;
+  margin: var(--sp-4) 0 var(--sp-3);
+  text-align: left;
+  color: var(--hero-ink);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 3.1rem;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.hcard-amount:active {
+  transform: scale(0.985);
+}
+
+.hcard-cents {
+  font-size: 1.4rem;
+  font-weight: 700;
+  opacity: 0.82;
+  margin-left: 2px;
+}
+
+.hcard-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.hcard-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: var(--r-full);
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 0.74rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.hcard-fresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.72);
+  white-space: nowrap;
+}
+
+.hcard-fresh::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.9);
+}
+
+.hcard-fresh.stale {
+  color: #ffd17b;
+}
+
+.hcard-fresh.stale::before {
+  background: #ffd17b;
+  box-shadow: 0 0 10px #ffd17b;
+}
+
+.hcard-dots {
+  display: flex;
+  gap: 6px;
+  margin-top: var(--sp-4);
+}
+
+.hcard-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.34);
+  transition: width var(--dur) var(--ease-spring), background var(--dur);
+}
+
+.hcard-dots span.active {
+  width: 18px;
+  border-radius: var(--r-full);
+  background: #fff;
+}
+
+/* ============ 3 actions sous la carte ============ */
+.hero-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+
+.hero-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: var(--sp-4) var(--sp-2);
+  border-radius: var(--r-lg);
+  background: var(--surface-solid);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 800;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast),
+    border-color var(--dur-fast);
+}
+
+.hero-action:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+.hero-action:active {
+  transform: scale(var(--press-scale));
+}
+
+.hero-action:disabled {
+  opacity: 0.6;
+}
+
+.hero-action-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-full);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.hero-action-label {
+  white-space: nowrap;
+}
+
+/* ============ Cartes de flux mensuel ============ */
+.flow-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+}
+
+.flow-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--sp-4);
+  border-radius: var(--r-lg);
+  background: var(--surface-solid);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.flow-card-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-sm);
+  margin-bottom: 2px;
+}
+
+.flow-card-icon.in {
+  background: var(--positive-soft);
+  color: var(--positive);
+}
+
+.flow-card-icon.out {
+  background: var(--negative-soft);
+  color: var(--negative);
+}
+
+.flow-card-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.flow-card-value {
+  font-size: 1.3rem;
+  font-weight: 900;
+  letter-spacing: 0;
 }
