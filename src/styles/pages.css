@@ -2130,37 +2130,44 @@
   margin-top: 16px;
 }
 
-.bstack-ghost {
+/* Deck de cartes réelles qui s'interchangent.
+   Scopé sous .balance-stack pour passer devant la règle .hcard (sinon
+   `.hcard { position: relative }` l'emporterait et les cartes s'empileraient
+   verticalement au lieu de se chevaucher). */
+.balance-stack .deck-card {
   position: absolute;
+  top: 0;
   left: 0;
   right: 0;
-  height: 44px;
-  border-radius: var(--r-xl);
-  background: var(--hero-grad);
-  pointer-events: none;
-  z-index: 0;
+  transform-origin: 50% 0%;
+  will-change: transform;
 }
 
-.bstack-ghost-1 {
-  top: -9px;
-  left: 16px;
-  right: 16px;
-  opacity: 0.7;
-  filter: brightness(0.9) saturate(1.05);
-  box-shadow: var(--shadow-card);
-}
-
-.bstack-ghost-2 {
-  top: -18px;
-  left: 32px;
-  right: 32px;
-  opacity: 0.42;
-  filter: brightness(0.8);
-}
-
-.balance-stack .hero-card {
+/* La carte de devant reste dans le flux → fixe la hauteur du conteneur (pas de saut). */
+.balance-stack .deck-card.is-front {
   position: relative;
-  z-index: 1;
+}
+
+.balance-stack .deck-card:not(.is-front) {
+  cursor: pointer;
+  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* Cartes en arrière-plan : contenu non cliquable (un clic les ramène au premier plan). */
+.balance-stack .deck-card:not(.is-front) .hcard-amount,
+.balance-stack .deck-card:not(.is-front) .hcard-flows {
+  pointer-events: none;
+}
+
+/* Voile d'assombrissement des cartes en profondeur. */
+.deck-scrim {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: #0a0618;
+  pointer-events: none;
+  z-index: 5;
+  transition: opacity var(--dur) var(--ease-out);
 }
 
 /* ============ Comptes — carte total (hero) ============ */
@@ -2399,6 +2406,53 @@
   margin-left: 2px;
 }
 
+/* Flux du mois (Entrées / Sorties) — compact, discret, en bas à gauche */
+.hcard-flows {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--hero-ink);
+  transition: opacity var(--dur-fast);
+}
+
+.hcard-flows:active {
+  opacity: 0.7;
+}
+
+.hcard-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  text-align: left;
+}
+
+.hcard-flow-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.hcard-flow-value {
+  font-size: 0.84rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.hcard-flow-value.pos {
+  color: #b8f5d6;
+}
+
+.hcard-flow-value.neg {
+  color: #ffc6d2;
+}
+
 .hcard-foot {
   display: flex;
   align-items: center;
@@ -2518,53 +2572,4 @@
 
 .hero-action-label {
   white-space: nowrap;
-}
-
-/* ============ Cartes de flux mensuel ============ */
-.flow-cards {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--sp-3);
-}
-
-.flow-card {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: var(--sp-4);
-  border-radius: var(--r-lg);
-  background: var(--surface-solid);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
-}
-
-.flow-card-icon {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--r-sm);
-  margin-bottom: 2px;
-}
-
-.flow-card-icon.in {
-  background: var(--positive-soft);
-  color: var(--positive);
-}
-
-.flow-card-icon.out {
-  background: var(--negative-soft);
-  color: var(--negative);
-}
-
-.flow-card-label {
-  font-size: 0.74rem;
-  font-weight: 700;
-  color: var(--text-muted);
-}
-
-.flow-card-value {
-  font-size: 1.3rem;
-  font-weight: 900;
-  letter-spacing: 0;
 }

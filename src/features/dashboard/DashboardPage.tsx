@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Repeat, ChevronRight, AlertCircle, Tags, ArrowDownLeft, ArrowUpRight } from 'lucide-react'
+import { Repeat, ChevronRight, AlertCircle, Tags } from 'lucide-react'
 import { useAccounts, useAlerts, useBudgets, useCategories, useSubscriptions, useTransactions } from '@/data/hooks'
 import {
   activeSubscriptionsMonthlyCost,
@@ -55,9 +55,12 @@ export function DashboardPage() {
     <div className="page">
       <BalanceStack
         accounts={accounts}
+        income={summary.income}
+        spending={summary.spending}
         lastSync={summary.lastSync}
         stale={stale}
         onOpenAccounts={() => navigate('/comptes')}
+        onOpenFlows={() => navigate('/operations')}
       />
 
       <BalanceActions />
@@ -76,22 +79,6 @@ export function DashboardPage() {
           <ChevronRight size={18} />
         </button>
       )}
-
-      {/* Flux du mois */}
-      <section className="rise" style={{ animationDelay: '130ms' }}>
-        <div className="flow-cards">
-          <div className="flow-card">
-            <span className="flow-card-icon in"><ArrowDownLeft size={16} /></span>
-            <span className="flow-card-label">Entrées</span>
-            <span className="flow-card-value num">{formatMoneyCompact(summary.income)}</span>
-          </div>
-          <div className="flow-card">
-            <span className="flow-card-icon out"><ArrowUpRight size={16} /></span>
-            <span className="flow-card-label">Sorties</span>
-            <span className="flow-card-value num">{formatMoneyCompact(summary.spending)}</span>
-          </div>
-        </div>
-      </section>
 
       {/* Dernières opérations */}
       {summary.recent.length > 0 && (
