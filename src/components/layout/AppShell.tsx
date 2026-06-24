@@ -2,6 +2,7 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { motion, useReducedMotion } from 'motion/react'
 import { TopBar } from './TopBar'
 import { TabBar } from './TabBar'
+import { AssistantFab } from '@/features/assistant/AssistantFab'
 import { useSession } from '@/store/session'
 import { useT } from '@/i18n'
 
@@ -49,6 +50,7 @@ export function AppShell() {
         <Outlet />
       </motion.main>
       <TabBar />
+      <AssistantFab />
     </div>
   )
 }

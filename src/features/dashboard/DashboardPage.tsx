@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Repeat, ChevronRight, AlertCircle, Tags } from 'lucide-react'
-import { useAccounts, useAlerts, useBudgets, useCategories, useGoals, useSubscriptions, useTransactions } from '@/data/hooks'
+import { useAccounts, useAlerts, useBudgets, useCategories, useSubscriptions, useTransactions } from '@/data/hooks'
 import {
   activeSubscriptionsMonthlyCost,
   buildEnvelopes,
@@ -19,7 +19,6 @@ import { BalanceStack } from './BalanceStack'
 import { BalanceActions } from './BalanceActions'
 import { ForecastCard } from './ForecastCard'
 import { WrappedTeaser } from '@/features/wrapped/WrappedTeaser'
-import { AssistantCard } from '@/features/assistant/AssistantCard'
 import { formatMoneyCompact, isStale } from '@/lib/format'
 import { haptic } from '@/lib/haptics'
 import { alertCopy } from '@/features/alerts/alertCopy'
@@ -31,7 +30,6 @@ export function DashboardPage() {
   const { data: categories = [] } = useCategories()
   const { data: budgets = [] } = useBudgets()
   const { data: subscriptions = [] } = useSubscriptions()
-  const { data: goals = [] } = useGoals()
   const { data: alerts = [] } = useAlerts()
 
   const catMap = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories])
@@ -70,15 +68,6 @@ export function DashboardPage() {
       <BalanceActions />
 
       <ForecastCard accounts={accounts} transactions={transactions} categories={categories} />
-
-      <AssistantCard
-        accounts={accounts}
-        transactions={transactions}
-        categories={categories}
-        budgets={budgets}
-        subscriptions={subscriptions}
-        goals={goals}
-      />
 
       <WrappedTeaser transactions={transactions} categories={categories} />
 

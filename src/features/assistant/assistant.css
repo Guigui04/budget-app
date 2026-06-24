@@ -1,5 +1,27 @@
 /* ============ Assistant « Demander à ton budget » ============ */
 
+/* Bulle flottante (FAB) à droite de la nav, centrée à la même hauteur. */
+.assistant-fab {
+  position: fixed;
+  right: var(--sp-4);
+  /* +7px : centre la bulle (54px) sur la pilule de nav (~68px). */
+  bottom: calc(var(--sp-3) + var(--safe-bottom) + 7px);
+  z-index: 51;
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  color: #fff;
+  background: linear-gradient(135deg, #7c5cff 0%, #b06ab3 100%);
+  box-shadow: var(--shadow-glow), 0 8px 20px rgba(20, 12, 40, 0.22);
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast);
+}
+
+.assistant-fab:active {
+  transform: scale(0.92);
+}
+
 /* Carte d'accès (accueil) */
 .assistant-teaser {
   position: relative;

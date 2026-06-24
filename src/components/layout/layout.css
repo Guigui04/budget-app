@@ -129,7 +129,8 @@
   display: flex;
   justify-content: center;
   pointer-events: none;
-  padding: 0 var(--sp-4) calc(var(--sp-3) + var(--safe-bottom));
+  /* Marge à droite : laisse la place à la bulle de l'assistant (FAB). */
+  padding: 0 calc(var(--sp-4) + 64px) calc(var(--sp-3) + var(--safe-bottom)) var(--sp-4);
 }
 
 .dock-inner {
@@ -197,7 +198,7 @@
 .tab-indicator {
   position: absolute;
   inset: 0;
-  border-radius: var(--r-md);
+  border-radius: var(--r-full);
   background: var(--accent-soft);
   z-index: 0;
 }
