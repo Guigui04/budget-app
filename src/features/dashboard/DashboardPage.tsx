@@ -18,6 +18,7 @@ import { TransactionRow } from '@/components/TransactionRow'
 import { BalanceStack } from './BalanceStack'
 import { BalanceActions } from './BalanceActions'
 import { ForecastCard } from './ForecastCard'
+import { WrappedTeaser } from '@/features/wrapped/WrappedTeaser'
 import { formatMoneyCompact, isStale } from '@/lib/format'
 import { haptic } from '@/lib/haptics'
 import { alertCopy } from '@/features/alerts/alertCopy'
@@ -67,6 +68,8 @@ export function DashboardPage() {
       <BalanceActions />
 
       <ForecastCard accounts={accounts} transactions={transactions} categories={categories} />
+
+      <WrappedTeaser transactions={transactions} categories={categories} />
 
       {todoCount > 0 && (
         <button

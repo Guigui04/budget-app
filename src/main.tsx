@@ -5,6 +5,7 @@ import './components/ui/ui.css'
 import './components/layout/aurora.css'
 import './components/layout/layout.css'
 import './styles/pages.css'
+import './features/wrapped/wrapped.css'
 import App from './App.tsx'
 
 createRoot(document.getElementById('root')!).render(
