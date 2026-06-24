@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import type { Budget, Category, Goal, Subscription, Transaction } from '@/types'
+import type { Account } from '@/types'
 import {
   activeSubscriptionsMonthlyCost,
   buildEnvelopes,
   categoryBreakdown,
   goalProgress,
+  monthForecast,
   monthIncome,
   monthSpending,
   spentForCategory,
@@ -161,5 +163,140 @@ describe('goalProgress', () => {
     const p = goalProgress({ ...base, currentAmount: 1200 })
     expect(p.ratio).toBe(1)
     expect(p.remaining).toBe(0)
+  })
+})
+
+describe('monthForecast', () => {
+  const FREF = new Date('2026-06-24T12:00:00')
+  function account(balance: number): Account {
+    return {
+      id: 'acc-1', bankConnectionId: 'bc', householdId: 'h', externalAccountId: 'x',
+      name: 'Courant', iban: 'FR76', currency: 'EUR', balance,
+      balanceUpdatedAt: FREF.toISOString(), kind: 'checking',
+    }
+  }
+
+  it('capte un salaire récurrent à venir, même sans flag isRecurring', () => {
+    // Salaire les 28/04 et 28/05 → prochaine occurrence projetée ~28/06 (à venir).
+    const txns = [
+      txn({ cleanLabel: 'VIR SALAIRE NOVA', amount: 2500, bookingDate: '2026-04-28', isRecurring: false }),
+      txn({ cleanLabel: 'VIR SALAIRE NOVA', amount: 2500, bookingDate: '2026-05-28', isRecurring: false }),
+    ]
+    const f = monthForecast([account(1000)], txns, FREF)
+    expect(f.upcomingIncome).toBeGreaterThan(2000)
+    expect(f.endBalance).toBeGreaterThan(1000)
+  })
+
+  it('capte un salaire à montant variable regroupé par catégorie (cas réel)', () => {
+    // Même catégorie « Salaire », montants qui varient de ~7 %, dates ~mensuelles.
+    const txns = [
+      txn({ categoryId: 'cat-salaire', amount: 829.37, bookingDate: '2026-03-04' }),
+      txn({ categoryId: 'cat-salaire', amount: 896.01, bookingDate: '2026-03-30' }),
+      txn({ categoryId: 'cat-salaire', amount: 951, bookingDate: '2026-04-27' }),
+      txn({ categoryId: 'cat-salaire', amount: 915.89, bookingDate: '2026-05-28' }),
+    ]
+    const f = monthForecast([account(500)], txns, FREF)
+    expect(f.upcomingIncome).toBeGreaterThan(800)
+    expect(f.upcomingIncome).toBeLessThan(1000)
+  })
+
+  it('isole le salaire (par catégorie) d\'une autre rentrée de montant proche', () => {
+    // Sans isolation par catégorie, le remboursement de montant voisin
+    // casserait la cadence et le salaire passerait inaperçu.
+    const txns = [
+      txn({ categoryId: 'cat-salaire', amount: 2000, bookingDate: '2026-04-26' }),
+      txn({ categoryId: 'cat-salaire', amount: 2000, bookingDate: '2026-05-26' }),
+      txn({ categoryId: 'cat-remb', amount: 2010, bookingDate: '2026-06-10' }), // remboursement ponctuel
+    ]
+    const f = monthForecast([account(1000)], txns, FREF)
+    expect(f.upcomingIncome).toBeGreaterThan(1800)
+  })
+
+  it('capte une charge fixe à venir sans la compter dans les dépenses variables', () => {
+    const txns = [
+      txn({ cleanLabel: 'LOYER SCI', amount: -1150, bookingDate: '2026-04-26' }),
+      txn({ cleanLabel: 'LOYER SCI', amount: -1150, bookingDate: '2026-05-26' }),
+    ]
+    const f = monthForecast([account(3000)], txns, FREF)
+    expect(f.upcomingFixed).toBeGreaterThan(1000)
+    expect(f.variableProjected).toBe(0)
+  })
+
+  it('rejette une enseigne à montant variable (ZARA) des charges fixes', () => {
+    const txns = [
+      txn({ cleanLabel: 'ZARA', amount: -35, bookingDate: '2026-03-15' }),
+      txn({ cleanLabel: 'ZARA', amount: -130, bookingDate: '2026-04-15' }),
+      txn({ cleanLabel: 'ZARA', amount: -89, bookingDate: '2026-05-15' }),
+    ]
+    const f = monthForecast([account(2000)], txns, FREF)
+    expect(f.fixedItems).toHaveLength(0)
+  })
+
+  it('rejette une charge terminée (dernier prélèvement trop ancien)', () => {
+    // Huissier payé jusqu'en mars puis terminé : dernier prélèvement > 45 j.
+    const txns = [
+      txn({ cleanLabel: 'HUISSIER JUSTICE', amount: -200, bookingDate: '2026-01-26' }),
+      txn({ cleanLabel: 'HUISSIER JUSTICE', amount: -200, bookingDate: '2026-02-26' }),
+      txn({ cleanLabel: 'HUISSIER JUSTICE', amount: -200, bookingDate: '2026-03-26' }),
+    ]
+    const f = monthForecast([account(2000)], txns, FREF)
+    expect(f.fixedItems).toHaveLength(0)
+  })
+
+  it('ne reprojette pas une charge dont l\'échéance est déjà passée (déjà payée)', () => {
+    // Abonnement payé ~le 20 : prochaine échéance projetée (19/06) déjà passée le 24 → pas de doublon.
+    const txns = [
+      txn({ cleanLabel: 'CLAUDE AI', amount: -20, bookingDate: '2026-04-20' }),
+      txn({ cleanLabel: 'CLAUDE AI', amount: -20, bookingDate: '2026-05-20' }),
+    ]
+    const f = monthForecast([account(2000)], txns, FREF)
+    expect(f.fixedItems).toHaveLength(0)
+  })
+
+  it('masque une charge fixe sans la compter dans la projection', () => {
+    const txns = [
+      txn({ cleanLabel: 'LOYER SCI', amount: -1150, bookingDate: '2026-04-26' }),
+      txn({ cleanLabel: 'LOYER SCI', amount: -1150, bookingDate: '2026-05-26' }),
+    ]
+    const base = monthForecast([account(3000)], txns, FREF)
+    const charge = base.fixedItems[0]
+    expect(charge).toBeDefined()
+    const excluded = monthForecast([account(3000)], txns, FREF, new Set([charge.key]))
+    // Toujours listée, mais marquée masquée et non comptée.
+    expect(excluded.fixedItems[0].excluded).toBe(true)
+    expect(excluded.upcomingFixed).toBe(0)
+    // Solde projeté plus élevé d'environ le montant de la charge retirée.
+    expect(excluded.endBalance).toBeGreaterThan(base.endBalance + 1000)
+  })
+
+  it('signale un risque de découvert quand la projection passe sous zéro', () => {
+    const txns = [
+      txn({ cleanLabel: 'LOYER SCI', amount: -1150, bookingDate: '2026-04-26' }),
+      txn({ cleanLabel: 'LOYER SCI', amount: -1150, bookingDate: '2026-05-26' }),
+    ]
+    const f = monthForecast([account(200)], txns, FREF)
+    expect(f.lowestPoint.balance).toBeLessThan(0)
+  })
+
+  it('exclut les virements (EMIS/VIR) des dépenses estimées', () => {
+    const txns = [
+      txn({ cleanLabel: 'CB CARREFOUR', amount: -40, bookingDate: '2026-06-10' }),
+      txn({ cleanLabel: 'EMIS INST Vers Maeva', amount: -500, bookingDate: '2026-06-12' }),
+    ]
+    const f = monthForecast([account(1000)], txns, FREF)
+    // Seul Carrefour (-40) alimente le burn : 40/90 ≈ 0,44 €/j → < 10 € sur 6 j.
+    // Si le virement de 500 € était compté, on serait à ~36 €.
+    expect(f.variableProjected).toBeLessThan(10)
+  })
+
+  it('estime les dépenses variables sans dépendre de la récurrence', () => {
+    const txns = [
+      txn({ cleanLabel: 'CB CARREFOUR', amount: -40, bookingDate: '2026-06-04' }),
+      txn({ cleanLabel: 'CB MONOPRIX', amount: -55, bookingDate: '2026-06-09' }),
+      txn({ cleanLabel: 'CB FRANPRIX', amount: -30, bookingDate: '2026-06-14' }),
+    ]
+    const f = monthForecast([account(1000)], txns, FREF)
+    expect(f.dailyBurn).toBeGreaterThan(0)
+    expect(f.variableProjected).toBeGreaterThan(0)
   })
 })

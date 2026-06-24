@@ -8,12 +8,18 @@ import { haptic } from '@/lib/haptics'
 
 interface BalanceStackProps {
   accounts: Account[]
-  income: number
-  spending: number
+  income?: number
+  spending?: number
   lastSync: string
   stale: boolean
   onOpenAccounts: () => void
   onOpenFlows?: () => void
+  /** Affiche Entrées/Sorties sur la carte foyer (accueil). Sinon un simple résumé. */
+  showFlows?: boolean
+  /** Libellé de la carte du foyer (par défaut « Solde du foyer »). */
+  householdLabel?: string
+  /** Sous-titre de la carte du foyer (par défaut « N comptes »). */
+  householdSub?: string
 }
 
 interface View {
@@ -57,6 +63,7 @@ interface DeckCardProps {
   lastSync: string
   stale: boolean
   reduce: boolean | null
+  showFlows: boolean
   onPrev: () => void
   onNext: () => void
   onOpenAccounts: () => void
@@ -70,7 +77,7 @@ interface DeckCardProps {
  * loger — d'où l'effet d'échange cohérent entre les deux cartes.
  */
 function DeckCard({
-  view, order, prevOrder, count, activeIndex, income, spending, lastSync, stale, reduce,
+  view, order, prevOrder, count, activeIndex, income, spending, lastSync, stale, reduce, showFlows,
   onPrev, onNext, onOpenAccounts, onOpenFlows, onBringFront,
 }: DeckCardProps) {
   const animated = useCountUp(view.value)
@@ -125,7 +132,7 @@ function DeckCard({
       </button>
 
       <div className="hcard-foot">
-        {isHousehold ? (
+        {isHousehold && showFlows ? (
           <button
             type="button"
             className="hcard-flows"
@@ -167,13 +174,21 @@ function DeckCard({
  * Carte solde — deck de cartes réelles (foyer + chaque compte) qui s'interchangent
  * avec une animation de plongeon/remontée. Pièce maîtresse du dashboard.
  */
-export function BalanceStack({ accounts, income, spending, lastSync, stale, onOpenAccounts, onOpenFlows }: BalanceStackProps) {
+export function BalanceStack({
+  accounts, income = 0, spending = 0, lastSync, stale, onOpenAccounts, onOpenFlows,
+  showFlows = true, householdLabel = 'Solde du foyer', householdSub,
+}: BalanceStackProps) {
   const reduce = useReducedMotion()
   const [nav, setNav] = useState({ index: 0, prev: 0 })
 
   const total = accounts.reduce((s, a) => s + a.balance, 0)
   const views: View[] = [
-    { key: 'household', label: 'Solde du foyer', value: total, sub: `${accounts.length} compte${accounts.length > 1 ? 's' : ''}` },
+    {
+      key: 'household',
+      label: householdLabel,
+      value: total,
+      sub: householdSub ?? `${accounts.length} compte${accounts.length > 1 ? 's' : ''}`,
+    },
     ...accounts.map((a) => ({ key: a.id, label: a.name, value: a.balance, sub: maskIban(a.iban) })),
   ]
   const count = views.length
@@ -198,6 +213,7 @@ export function BalanceStack({ accounts, income, spending, lastSync, stale, onOp
           lastSync={lastSync}
           stale={stale}
           reduce={reduce}
+          showFlows={showFlows}
           onPrev={move(-1)}
           onNext={move(1)}
           onOpenAccounts={onOpenAccounts}

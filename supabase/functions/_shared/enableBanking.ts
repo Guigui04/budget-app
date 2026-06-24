@@ -113,7 +113,16 @@ export class EnableBankingProvider implements BankProvider {
       access: { valid_until: string }
     }>(`/sessions`, { method: 'POST', body: JSON.stringify({ code: authCode }) })
 
-    const accounts = await Promise.all(accountUids(data.accounts).map((uid) => this.describeAccount(data.session_id, uid)))
+    const uids = accountUids(data.accounts)
+    if (uids.length === 0) {
+      // Aucun compte rattaché au consentement : on échoue clairement plutôt
+      // que de créer une connexion vide et trompeuse.
+      throw new Error(
+        `Aucun compte partagé. La connexion n'a pas été finalisée : recommencez et ` +
+          `validez bien la sélection des comptes dans votre banque.`,
+      )
+    }
+    const accounts = await Promise.all(uids.map((uid) => this.describeAccount(data.session_id, uid)))
     return { sessionId: data.session_id, accounts, consentExpiresAt: data.access.valid_until }
   }
 

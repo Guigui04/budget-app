@@ -117,7 +117,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      report.push({ connection: conn.aspsp_name, imported, status: 'ok' })
+      report.push({ connection: conn.aspsp_name, accounts: accounts.length, imported, status: 'ok' })
     } catch (e) {
       await db.from('bank_connections').update({ status: 'error' }).eq('id', conn.id)
       await createAlert(db, conn.household_id, 'sync_error', { bank: conn.aspsp_name })

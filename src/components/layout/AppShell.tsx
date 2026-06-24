@@ -1,17 +1,9 @@
-import { useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { motion, useReducedMotion } from 'motion/react'
 import { TopBar } from './TopBar'
 import { TabBar } from './TabBar'
 import { useSession } from '@/store/session'
 import { useT } from '@/i18n'
-
-// Ordre des écrans → détermine le sens du glissement de transition.
-const NAV_ORDER = ['/', '/operations', '/budgets', '/objectifs', '/abonnements', '/comptes', '/alertes', '/reglages']
-const navIndex = (p: string) => {
-  const i = NAV_ORDER.indexOf(p)
-  return i === -1 ? 0 : i
-}
 
 function greetingForHour(t: ReturnType<typeof useT>): string {
   const h = new Date().getHours()
@@ -40,30 +32,22 @@ export function AppShell() {
   const title = titles[pathname] ?? t.common.appName
   const greeting = isHome && user ? greetingForHour(t) : undefined
 
-  // Sens du glissement : avancer dans la nav = vers la gauche, reculer = droite.
-  // Pattern officiel React : ajuster l'état pendant le rendu quand la route change.
-  const current = navIndex(pathname)
-  const [nav, setNav] = useState({ index: current, dir: 1 })
-  if (nav.index !== current) {
-    setNav({ index: current, dir: current >= nav.index ? 1 : -1 })
-  }
-  const shift = 26 * nav.dir
-
   return (
     <div className="app-shell">
       <TopBar title={title} greeting={greeting} isHome={isHome} />
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.main
-          key={pathname}
-          className="app-main"
-          initial={reduceMotion ? false : { opacity: 0, x: shift }}
-          animate={reduceMotion ? { opacity: 1 } : { opacity: 1, x: 0 }}
-          exit={reduceMotion ? { opacity: 0 } : { opacity: 0, x: -shift }}
-          transition={{ type: 'spring', stiffness: 320, damping: 32, mass: 0.8 }}
-        >
-          <Outlet />
-        </motion.main>
-      </AnimatePresence>
+      {/* Fondu d'apparition à chaque changement de route. La clé = pathname force
+          un nouveau montage → motion rejoue initial→animate (fondu fiable, sans
+          attente ni « pop »). Pas d'AnimatePresence : l'ancienne page laisse
+          place au fond animé pendant que la nouvelle apparaît en douceur. */}
+      <motion.main
+        key={pathname}
+        className="app-main"
+        initial={reduceMotion ? false : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.32, ease: 'easeInOut' }}
+      >
+        <Outlet />
+      </motion.main>
       <TabBar />
     </div>
   )

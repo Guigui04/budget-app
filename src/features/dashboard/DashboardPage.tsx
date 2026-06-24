@@ -17,6 +17,7 @@ import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { TransactionRow } from '@/components/TransactionRow'
 import { BalanceStack } from './BalanceStack'
 import { BalanceActions } from './BalanceActions'
+import { ForecastCard } from './ForecastCard'
 import { formatMoneyCompact, isStale } from '@/lib/format'
 import { haptic } from '@/lib/haptics'
 import { alertCopy } from '@/features/alerts/alertCopy'
@@ -64,6 +65,8 @@ export function DashboardPage() {
       />
 
       <BalanceActions />
+
+      <ForecastCard accounts={accounts} transactions={transactions} categories={categories} />
 
       {todoCount > 0 && (
         <button

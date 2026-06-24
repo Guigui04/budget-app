@@ -105,7 +105,18 @@ export class GoCardlessProvider implements BankProvider {
   }
 
   async createSession(requisitionId: string): Promise<CreateSessionResult> {
-    const accounts = await this.getAccounts(requisitionId)
+    // On lit le statut en plus des comptes : si la requisition n'a partagé aucun
+    // compte (sélection non finalisée, banque rejetée…), on échoue clairement
+    // plutôt que de créer une connexion vide et trompeuse.
+    const req = await api<{ status?: string; accounts?: string[] }>(`/requisitions/${requisitionId}/`)
+    const ids = req.accounts ?? []
+    if (ids.length === 0) {
+      throw new Error(
+        `Aucun compte partagé (statut ${req.status ?? 'inconnu'}). La connexion n'a pas été ` +
+          `finalisée : recommencez et validez bien la sélection des comptes dans votre banque.`,
+      )
+    }
+    const accounts = await Promise.all(ids.map((id) => this.describeAccount(id)))
     const consentExpiresAt = new Date(Date.now() + CONSENT_DAYS * 86_400_000).toISOString()
     return { sessionId: requisitionId, accounts, consentExpiresAt }
   }

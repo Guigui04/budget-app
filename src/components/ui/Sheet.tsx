@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, motion, useDragControls } from 'motion/react'
 import { useEffect, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 
@@ -11,6 +11,8 @@ interface SheetProps {
 
 /** Mobile bottom sheet with backdrop, drag handle and spring entrance. */
 export function Sheet({ open, onClose, title, children }: SheetProps) {
+  const dragControls = useDragControls()
+
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
@@ -46,8 +48,24 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
+            // Glisser vers le bas pour fermer. Le drag ne démarre que depuis la
+            // poignée (dragListener=false + pointer down sur la poignée) afin de
+            // ne pas interférer avec le défilement du contenu.
+            drag="y"
+            dragControls={dragControls}
+            dragListener={false}
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0, bottom: 0.7 }}
+            onDragEnd={(_, info) => {
+              if (info.offset.y > 120 || info.velocity.y > 600) onClose()
+            }}
           >
-            <div className="sheet-handle" />
+            <div
+              className="sheet-handle-zone"
+              onPointerDown={(e) => dragControls.start(e)}
+            >
+              <div className="sheet-handle" />
+            </div>
             {title && <h2 className="sheet-title">{title}</h2>}
             {children}
           </motion.div>

@@ -2,10 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Landmark, Plus, RefreshCw, AlertTriangle, Wallet, PiggyBank, Trash2 } from 'lucide-react'
 import { useAccounts, useCompleteBankCallback, useConnections, useDeleteBankConnection, useManualSync } from '@/data/hooks'
-import { totalBalance } from '@/data/selectors'
 import { Button } from '@/components/ui/Button'
+import { BalanceStack } from '@/features/dashboard/BalanceStack'
 import { ConnectBankSheet } from './ConnectBankSheet'
-import { formatMoney, formatBalanceParts, maskIban, formatRelative, isStale, daysUntil } from '@/lib/format'
+import { formatMoney, maskIban, formatRelative, isStale, daysUntil } from '@/lib/format'
 import { haptic } from '@/lib/haptics'
 
 export function AccountsPage() {
@@ -28,7 +28,10 @@ export function AccountsPage() {
     [connections, accounts],
   )
 
-  const total = totalBalance(accounts)
+  const lastSync = accounts.length
+    ? accounts.reduce((latest, a) => (a.balanceUpdatedAt > latest ? a.balanceUpdatedAt : latest), accounts[0].balanceUpdatedAt)
+    : new Date().toISOString()
+  const stale = accounts.length > 0 && isStale(lastSync)
 
   useEffect(() => {
     const code = searchParams.get('code')
@@ -96,24 +99,28 @@ export function AccountsPage() {
 
   return (
     <div className="page">
-      <section className="hero-card accounts-hero rise" style={{ animationDelay: '20ms' }}>
-        <div className="hero-top">
-          <span className="section-label">Patrimoine consolidé</span>
-          <button
-            className="hero-refresh"
-            onClick={refreshNow}
-            disabled={sync.isPending || callback.isPending || connections.length === 0}
-            aria-label="Rafraîchir"
-          >
-            <RefreshCw size={18} className={sync.isPending || callback.isPending ? 'spin' : undefined} />
-          </button>
-        </div>
-        <div className="hero-amount num">
-          {(() => { const b = formatBalanceParts(total); return <>{b.sign}{b.whole}<span className="hero-amount-cents">,{b.cents} €</span></> })()}
-        </div>
-        <span className="hero-fresh">{accounts.length} compte{accounts.length > 1 ? 's' : ''} · {connections.length} banque{connections.length > 1 ? 's' : ''}</span>
-        {syncMessage && <p className="hero-sync-note">{syncMessage}</p>}
-      </section>
+      <div className="accounts-refresh-row rise" style={{ animationDelay: '10ms' }}>
+        <button
+          className="pill"
+          onClick={refreshNow}
+          disabled={sync.isPending || callback.isPending || connections.length === 0}
+        >
+          <RefreshCw size={13} className={sync.isPending || callback.isPending ? 'spin' : undefined} /> Rafraîchir
+        </button>
+      </div>
+
+      {/* Deck patrimoine : carte foyer (total) + une carte par compte, avec bulles. */}
+      <BalanceStack
+        accounts={accounts}
+        lastSync={lastSync}
+        stale={stale}
+        showFlows={false}
+        householdLabel="Patrimoine consolidé"
+        householdSub={`${accounts.length} compte${accounts.length > 1 ? 's' : ''} · ${connections.length} banque${connections.length > 1 ? 's' : ''}`}
+        onOpenAccounts={() => {}}
+      />
+
+      {syncMessage && <p className="accounts-sync-note">{syncMessage}</p>}
 
       {grouped.map(({ connection, accounts: accs }, i) => {
         const consentDays = daysUntil(connection.consentExpiresAt)
@@ -138,6 +145,15 @@ export function AccountsPage() {
               </button>
             </div>
             <div className="card stack-rows">
+              {accs.length === 0 && (
+                <div className="account-row account-empty">
+                  <span className="account-icon account-icon-warn"><AlertTriangle size={18} /></span>
+                  <div className="account-main">
+                    <span className="account-name">Aucun compte synchronisé</span>
+                    <span className="account-iban">Supprimez puis reconnectez en validant la sélection des comptes dans votre banque.</span>
+                  </div>
+                </div>
+              )}
               {accs.map((a) => {
                 const stale = isStale(a.balanceUpdatedAt)
                 return (

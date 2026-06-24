@@ -234,12 +234,33 @@ a.card:active {
   box-shadow: var(--shadow-lg);
 }
 
+/* Zone tactile élargie autour de la poignée : c'est ici qu'on attrape la
+   fiche pour la glisser vers le bas et la fermer. touch-action: none évite que
+   le navigateur interprète le geste comme un défilement. */
+.sheet-handle-zone {
+  display: flex;
+  justify-content: center;
+  padding: 6px 0 var(--sp-4);
+  margin-top: calc(-1 * var(--sp-3));
+  touch-action: none;
+  cursor: grab;
+}
+
+.sheet-handle-zone:active {
+  cursor: grabbing;
+}
+
 .sheet-handle {
   width: 42px;
   height: 5px;
   border-radius: var(--r-full);
   background: var(--border-strong);
-  margin: 0 auto var(--sp-4);
+  transition: background var(--dur-fast), width var(--dur-fast) var(--ease-out);
+}
+
+.sheet-handle-zone:active .sheet-handle {
+  width: 56px;
+  background: var(--text-muted);
 }
 
 .sheet-title {
@@ -361,13 +382,11 @@ a.card:active {
 @keyframes riseIn {
   from {
     opacity: 0;
-    transform: translateY(18px) scale(0.99);
-    filter: blur(6px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
+    transform: translateY(0);
   }
 }
 
@@ -379,5 +398,5 @@ a.card:active {
 }
 
 .rise {
-  animation: riseIn var(--dur-slow) var(--ease-out) both;
+  animation: riseIn var(--dur) var(--ease-out) both;
 }

@@ -679,6 +679,235 @@
   font-size: 0.78rem;
 }
 
+/* ── Prévision de fin de mois ─────────────────────────────── */
+.forecast {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.forecast:active {
+  transform: scale(0.99);
+}
+
+.forecast-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  margin-top: 2px;
+  color: var(--accent-text);
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+/* Détail (sheet) */
+.forecast-sheet-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin-bottom: var(--sp-4);
+}
+
+.forecast-sheet-value {
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 1.05;
+}
+
+.forecast-section {
+  border-top: 1px solid var(--grid-line);
+  padding-top: var(--sp-3);
+  margin-top: var(--sp-3);
+}
+
+.forecast-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--sp-2);
+}
+
+.forecast-line {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 7px 0;
+}
+
+.forecast-line-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.forecast-line-title {
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.forecast-line-meta {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.forecast-line-amt {
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.forecast-line-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: var(--r-full);
+  color: var(--text-muted);
+  background: var(--surface-sunk);
+  transition: color var(--dur-fast), background var(--dur-fast), transform var(--dur-fast) var(--ease-out);
+}
+
+.forecast-line-action:active {
+  transform: scale(0.9);
+}
+
+.forecast-line.is-excluded {
+  opacity: 0.5;
+}
+
+.forecast-line.is-excluded .forecast-line-title,
+.forecast-line.is-excluded .forecast-line-amt {
+  text-decoration: line-through;
+}
+
+.forecast-line.is-excluded .forecast-line-action {
+  color: var(--accent-text);
+}
+
+.forecast .num.pos,
+.forecast-line-amt.pos,
+.forecast-section-head .num.pos {
+  color: var(--positive);
+}
+
+.forecast .num.neg,
+.forecast-line-amt.neg,
+.forecast-section-head .num.neg {
+  color: var(--negative);
+}
+
+.forecast-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--sp-2);
+  font-size: 0.8rem;
+  color: var(--text-faint);
+}
+
+.forecast-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.forecast-value {
+  font-size: 1.7rem;
+  font-weight: 900;
+  line-height: 1.1;
+  margin-top: 2px;
+}
+
+.forecast-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: var(--r-full);
+  font-size: 0.82rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.forecast-delta.pos {
+  color: var(--positive);
+  background: var(--positive-soft);
+}
+
+.forecast-delta.neg {
+  color: var(--negative);
+  background: var(--negative-soft);
+}
+
+.forecast-risk {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  background: var(--negative-soft);
+  color: var(--negative);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.forecast-chips {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.forecast-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.forecast-chip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--r-full);
+  flex-shrink: 0;
+}
+
+.forecast-chip-icon.pos {
+  color: var(--positive);
+  background: var(--positive-soft);
+}
+
+.forecast-chip-icon.neg {
+  color: var(--negative);
+  background: var(--negative-soft);
+}
+
+.forecast-chip-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.92rem;
+  color: var(--text-muted);
+}
+
+.forecast-chip-val {
+  font-size: 0.95rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
 .mini-alert {
   display: flex;
   align-items: flex-start;
@@ -1413,6 +1642,17 @@
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0;
+}
+
+/* Connexion sans compte synchronisé : message d'alerte à la place des lignes. */
+.account-empty .account-iban {
+  white-space: normal;
+  color: var(--text-muted);
+}
+
+.account-icon-warn {
+  background: var(--negative-soft);
+  color: var(--negative);
 }
 
 .account-right {
@@ -2173,6 +2413,20 @@
 /* ============ Comptes — carte total (hero) ============ */
 .accounts-hero {
   cursor: default;
+}
+
+/* Ligne « Rafraîchir » au-dessus du deck patrimoine (page Comptes). */
+.accounts-refresh-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.accounts-sync-note {
+  margin-top: var(--sp-3);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-align: center;
 }
 
 .hero-refresh {
