@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { motion } from 'motion/react'
-import { Home, ArrowLeftRight, Wallet, Target } from 'lucide-react'
+import { Home, ArrowLeftRight, Wallet, Gem } from 'lucide-react'
 import { useT } from '@/i18n'
 import { haptic } from '@/lib/haptics'
 
@@ -16,7 +16,7 @@ export function TabBar() {
     { to: '/', label: t.nav.home, icon: Home, end: true },
     { to: '/operations', label: t.nav.transactions, icon: ArrowLeftRight, end: false },
     { to: '/budgets', label: t.nav.budgets, icon: Wallet, end: false },
-    { to: '/objectifs', label: t.nav.goals, icon: Target, end: false },
+    { to: '/patrimoine', label: t.nav.wealth, icon: Gem, end: false },
   ]
 
   return (

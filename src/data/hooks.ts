@@ -17,6 +17,7 @@ import {
   type CompleteBankAuthResult,
   type ManualSyncResult,
 } from '@/lib/bank/client'
+import { fetchQuotes } from '@/lib/market/client'
 import { demoStore } from './demoStore'
 import {
   mapAccount,
@@ -25,6 +26,8 @@ import {
   mapCategory,
   mapConnection,
   mapGoal,
+  mapHolding,
+  mapNetWorthSnapshot,
   mapSubscription,
   mapTransaction,
   type Row,
@@ -36,6 +39,9 @@ import type {
   Budget,
   Category,
   Goal,
+  Holding,
+  NetWorthSnapshot,
+  Quote,
   Subscription,
   Transaction,
 } from '@/types'
@@ -67,6 +73,8 @@ export const keys = {
   subscriptions: ['subscriptions'] as const,
   alerts: ['alerts'] as const,
   connections: ['connections'] as const,
+  holdings: ['holdings'] as const,
+  networth: ['networth'] as const,
 }
 
 const bankSyncKeys = [
@@ -75,6 +83,7 @@ const bankSyncKeys = [
   keys.transactions,
   keys.alerts,
   keys.goals,
+  keys.holdings,
 ] as const
 
 export function useAccounts() {
@@ -113,6 +122,57 @@ export function useGoals() {
   return useQuery({
     queryKey: keys.goals,
     queryFn: async (): Promise<Goal[]> => (live ? select('goals', mapGoal) : demoStore.snapshot().goals),
+  })
+}
+
+export function useHoldings() {
+  return useQuery({
+    queryKey: keys.holdings,
+    queryFn: async (): Promise<Holding[]> =>
+      live ? select('investment_holdings', mapHolding) : demoStore.snapshot().holdings,
+  })
+}
+
+export function useNetWorthSnapshots() {
+  return useQuery({
+    queryKey: keys.networth,
+    queryFn: async (): Promise<NetWorthSnapshot[]> =>
+      live ? select('networth_snapshots', mapNetWorthSnapshot, 'as_of') : demoStore.snapshot().netWorthSnapshots,
+  })
+}
+
+/** Enregistre le point de valeur nette du jour (un seul par jour, upsert). */
+export function useRecordNetWorth() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ total, cash, invested }: { total: number; cash: number; invested: number }) => {
+      const asOf = new Date().toISOString().slice(0, 10)
+      if (live) {
+        const { error } = await supabase!.from('networth_snapshots').upsert(
+          { household_id: requireHouseholdId(), as_of: asOf, total, cash, invested },
+          { onConflict: 'household_id,as_of' },
+        )
+        if (error) throw new Error(error.message)
+      } else {
+        demoStore.recordNetWorth(total, cash, invested)
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.networth }),
+  })
+}
+
+/**
+ * Cours de marché des symboles fournis. Rafraîchi toutes les 15 min (free-tier
+ * du fournisseur respecté grâce au cache côté Edge Function).
+ */
+export function useQuotes(symbols: string[]) {
+  const sorted = [...new Set(symbols.filter(Boolean))].sort()
+  return useQuery({
+    queryKey: ['quotes', sorted] as const,
+    queryFn: async (): Promise<Quote[]> => fetchQuotes(sorted),
+    enabled: sorted.length > 0,
+    staleTime: 15 * 60 * 1000,
+    refetchInterval: 15 * 60 * 1000,
   })
 }
 
@@ -261,6 +321,51 @@ export function useDeleteGoal() {
       else demoStore.deleteGoal(goalId)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.goals }),
+  })
+}
+
+export type HoldingInput = Omit<Holding, 'householdId' | 'createdAt' | 'updatedAt' | 'id'> & { id?: string }
+
+export function useSaveHolding() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (holding: HoldingInput) => {
+      if (live) {
+        const { error } = await supabase!.from('investment_holdings').upsert({
+          id: holding.id,
+          household_id: requireHouseholdId(),
+          kind: holding.kind,
+          symbol: holding.symbol,
+          name: holding.name,
+          quantity: holding.quantity,
+          cost_basis: holding.costBasis,
+          currency: holding.currency,
+          envelope: holding.envelope,
+          manual_value: holding.manualValue,
+          linked_account_id: holding.linkedAccountId,
+          updated_at: new Date().toISOString(),
+        })
+        if (error) throw new Error(error.message)
+      } else {
+        demoStore.upsertHolding(holding)
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.holdings }),
+  })
+}
+
+export function useDeleteHolding() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (holdingId: string) => {
+      if (live) {
+        const { error } = await supabase!.from('investment_holdings').delete().eq('id', holdingId)
+        if (error) throw new Error(error.message)
+      } else {
+        demoStore.deleteHolding(holdingId)
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.holdings }),
   })
 }
 

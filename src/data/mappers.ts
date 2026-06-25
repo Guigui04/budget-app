@@ -9,6 +9,11 @@ import type {
   CategorySource,
   ConnectionStatus,
   Goal,
+  Holding,
+  HoldingEnvelope,
+  HoldingKind,
+  NetWorthSnapshot,
+  Quote,
   Subscription,
   SubscriptionFrequency,
   Transaction,
@@ -86,6 +91,39 @@ export const mapGoal = (r: Row): Goal => ({
   targetDate: asNullableString(r.target_date),
   linkedAccountId: asNullableString(r.linked_account_id),
   color: asString(r.color, '#46c79a'),
+})
+
+export const mapHolding = (r: Row): Holding => ({
+  id: asString(r.id),
+  householdId: asString(r.household_id),
+  kind: asString(r.kind, 'other') as HoldingKind,
+  symbol: asNullableString(r.symbol),
+  name: asString(r.name),
+  quantity: Number(r.quantity ?? 0),
+  costBasis: Number(r.cost_basis ?? 0),
+  currency: asString(r.currency, 'EUR'),
+  envelope: asString(r.envelope, 'autre') as HoldingEnvelope,
+  manualValue: r.manual_value == null ? null : Number(r.manual_value),
+  linkedAccountId: asNullableString(r.linked_account_id),
+  createdAt: asString(r.created_at),
+  updatedAt: asString(r.updated_at),
+})
+
+export const mapNetWorthSnapshot = (r: Row): NetWorthSnapshot => ({
+  id: asString(r.id),
+  householdId: asString(r.household_id),
+  asOf: asString(r.as_of),
+  total: Number(r.total ?? 0),
+  cash: Number(r.cash ?? 0),
+  invested: Number(r.invested ?? 0),
+})
+
+export const mapQuote = (r: Row): Quote => ({
+  symbol: asString(r.symbol),
+  price: Number(r.price ?? 0),
+  currency: asString(r.currency, 'EUR'),
+  changePct: Number(r.change_pct ?? 0),
+  asOf: asString(r.as_of),
 })
 
 export const mapSubscription = (r: Row): Subscription => ({

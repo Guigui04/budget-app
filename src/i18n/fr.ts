@@ -10,6 +10,7 @@ export const fr = {
     transactions: 'Opérations',
     budgets: 'Budgets',
     goals: 'Objectifs',
+    wealth: 'Patrimoine',
     subscriptions: 'Abonnements',
     subscriptionsShort: 'Abos',
     accounts: 'Comptes',

@@ -2827,3 +2827,398 @@
 .hero-action-label {
   white-space: nowrap;
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Patrimoine (hub objectifs · automatismes · investir)
+   ───────────────────────────────────────────────────────────── */
+
+.wealth-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: var(--sp-5) var(--sp-4) var(--sp-6);
+  text-align: center;
+}
+
+.wealth-hero-label {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.wealth-hero-value {
+  font-family: var(--font-numeric);
+  font-size: 2.5rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+.wealth-hero-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.wealth-hero-meta .pill {
+  gap: 4px;
+}
+
+.wealth-hero-split {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.invest-summary-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-2);
+}
+
+.invest-summary-value {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-numeric);
+  font-size: 1.6rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+.holding-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.holding-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  text-align: left;
+}
+
+.holding-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: var(--r-sm);
+}
+
+.holding-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.holding-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 900;
+}
+
+.holding-sub {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.holding-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--accent-text);
+}
+
+.holding-figures {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.holding-value {
+  font-weight: 900;
+}
+
+.holding-change {
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.holding-change.up {
+  color: var(--positive);
+}
+
+.holding-change.down {
+  color: var(--negative);
+}
+
+.holding-estimate {
+  margin-top: -2px;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+/* Recherche de symbole */
+.symbol-search {
+  position: relative;
+}
+
+.symbol-search-icon {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.symbol-search .input {
+  padding-left: 38px;
+}
+
+.symbol-results {
+  margin-top: var(--sp-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: var(--surface-solid);
+}
+
+.symbol-results li + li {
+  border-top: 1px solid var(--border);
+}
+
+.symbol-results button {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: baseline;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: 10px var(--sp-3);
+  text-align: left;
+  transition: background var(--dur-fast);
+}
+
+.symbol-results button:hover {
+  background: var(--surface-2);
+}
+
+.symbol-results-sym {
+  font-weight: 900;
+  font-size: 0.85rem;
+}
+
+.symbol-results-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.symbol-results-ex {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.field-hint {
+  display: block;
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+}
+
+/* Accroche simulateur */
+.sim-teaser {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.sim-teaser-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: var(--r-sm);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.sim-teaser-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.sim-teaser-title {
+  display: block;
+  font-weight: 900;
+}
+
+.sim-teaser-sub {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.sim-teaser-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: var(--r-full);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+/* Vue automatismes (placeholder) */
+.auto-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: var(--sp-4) var(--sp-4) var(--sp-2);
+  text-align: center;
+}
+
+.auto-hero-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--r-full);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  margin-bottom: 4px;
+}
+
+.auto-hero-title {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 900;
+}
+
+.auto-hero-sub {
+  max-width: 280px;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.auto-ideas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.auto-idea {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.auto-idea-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--accent-text);
+}
+
+.auto-idea-title {
+  display: block;
+  font-weight: 800;
+}
+
+.auto-idea-desc {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+/* Courbe de valeur nette */
+.trend-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-2);
+}
+
+.trend-head .pill {
+  gap: 4px;
+}
+
+.trend-empty {
+  padding: var(--sp-5) var(--sp-3);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.trend-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+}
+
+.trend-foot .segmented {
+  flex: 1;
+}
+
+.trend-foot-val {
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+/* Bannière cours indisponibles */
+.quotes-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 10px var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--amber-soft);
+  color: var(--amber);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
