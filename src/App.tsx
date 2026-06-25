@@ -14,7 +14,7 @@ const LoginPage = lazy(() => import('@/features/auth/LoginPage').then((m) => ({ 
 const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })))
 const TransactionsPage = lazy(() => import('@/features/transactions/TransactionsPage').then((m) => ({ default: m.TransactionsPage })))
 const BudgetsPage = lazy(() => import('@/features/budgets/BudgetsPage').then((m) => ({ default: m.BudgetsPage })))
-const GoalsPage = lazy(() => import('@/features/goals/GoalsPage').then((m) => ({ default: m.GoalsPage })))
+const WealthPage = lazy(() => import('@/features/wealth/WealthPage').then((m) => ({ default: m.WealthPage })))
 const SubscriptionsPage = lazy(() => import('@/features/subscriptions/SubscriptionsPage').then((m) => ({ default: m.SubscriptionsPage })))
 const AccountsPage = lazy(() => import('@/features/accounts/AccountsPage').then((m) => ({ default: m.AccountsPage })))
 const AlertsPage = lazy(() => import('@/features/alerts/AlertsPage').then((m) => ({ default: m.AlertsPage })))
@@ -77,7 +77,8 @@ export default function App() {
               <Route path="/" element={<DashboardPage />} />
               <Route path="/operations" element={<TransactionsPage />} />
               <Route path="/budgets" element={<BudgetsPage />} />
-              <Route path="/objectifs" element={<GoalsPage />} />
+              <Route path="/patrimoine" element={<WealthPage />} />
+              <Route path="/objectifs" element={<Navigate to="/patrimoine" replace />} />
               <Route path="/abonnements" element={<SubscriptionsPage />} />
               <Route path="/comptes" element={<AccountsPage />} />
               <Route path="/alertes" element={<AlertsPage />} />

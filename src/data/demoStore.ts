@@ -10,6 +10,9 @@ import type {
   Category,
   CategorizationRule,
   Goal,
+  Holding,
+  NetWorthSnapshot,
+  Quote,
   Subscription,
   Transaction,
 } from '@/types'
@@ -20,6 +23,9 @@ import {
   demoCategories,
   demoConnections,
   demoGoals,
+  demoHoldings,
+  demoNetWorthSnapshots,
+  demoQuote,
   demoSubscriptions,
   demoTransactions,
 } from './demo'
@@ -34,6 +40,8 @@ interface DemoState {
   alerts: Alert[]
   connections: BankConnection[]
   rules: CategorizationRule[]
+  holdings: Holding[]
+  netWorthSnapshots: NetWorthSnapshot[]
 }
 
 const state: DemoState = {
@@ -46,6 +54,8 @@ const state: DemoState = {
   alerts: demoAlerts,
   connections: demoConnections,
   rules: [],
+  holdings: demoHoldings,
+  netWorthSnapshots: demoNetWorthSnapshots,
 }
 
 export const demoStore = {
@@ -123,6 +133,39 @@ export const demoStore = {
     state.goals = state.goals.filter((g) => g.id !== goalId)
   },
 
+  upsertHolding(holding: Omit<Holding, 'id' | 'householdId' | 'createdAt' | 'updatedAt'> & { id?: string }): void {
+    const now = new Date().toISOString()
+    if (holding.id) {
+      state.holdings = state.holdings.map((h) =>
+        h.id === holding.id ? ({ ...h, ...holding, updatedAt: now } as Holding) : h,
+      )
+    } else {
+      state.holdings = [
+        ...state.holdings,
+        { ...holding, id: `hold-${Date.now()}`, householdId: 'hh-foyer', createdAt: now, updatedAt: now } as Holding,
+      ]
+    }
+  },
+
+  deleteHolding(holdingId: string): void {
+    state.holdings = state.holdings.filter((h) => h.id !== holdingId)
+  },
+
+  /** Cours simulés (déterministes) pour les symboles demandés. */
+  quotesFor(symbols: string[]): Quote[] {
+    return symbols.map(demoQuote)
+  },
+
+  /** Enregistre (ou met à jour) le point de valeur nette du jour. */
+  recordNetWorth(total: number, cash: number, invested: number): void {
+    const asOf = new Date().toISOString().slice(0, 10)
+    const rest = state.netWorthSnapshots.filter((s) => s.asOf !== asOf)
+    state.netWorthSnapshots = [
+      ...rest,
+      { id: `nw-${asOf}`, householdId: 'hh-foyer', asOf, total, cash, invested },
+    ]
+  },
+
   setSubscriptionConfirmed(subId: string, confirmed: boolean): void {
     state.subscriptions = state.subscriptions.map((s) =>
       s.id === subId ? { ...s, isConfirmed: confirmed } : s,
@@ -160,6 +203,11 @@ export const demoStore = {
       g.linkedAccountId && accountIds.has(g.linkedAccountId)
         ? { ...g, linkedAccountId: null }
         : g,
+    )
+    state.holdings = state.holdings.map((h) =>
+      h.linkedAccountId && accountIds.has(h.linkedAccountId)
+        ? { ...h, linkedAccountId: null }
+        : h,
     )
   },
 }

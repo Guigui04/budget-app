@@ -10,8 +10,12 @@ import type {
   Budget,
   Category,
   Goal,
+  Holding,
   Household,
+  NetWorthSnapshot,
+  Quote,
   Subscription,
+  SymbolSearchResult,
   Transaction,
   UserProfile,
 } from '@/types'
@@ -100,6 +104,96 @@ export const demoGoals: Goal[] = [
   { id: 'goal-secours', householdId: HOUSEHOLD_ID, name: "Fonds d'urgence", targetAmount: 12000, currentAmount: 11200, targetDate: null, linkedAccountId: 'acc-ca-livret', color: '#46c79a' },
   { id: 'goal-canape', householdId: HOUSEHOLD_ID, name: 'Nouveau canapé', targetAmount: 1500, currentAmount: 540, targetDate: dateInDays(90), linkedAccountId: null, color: '#e8b24c' },
 ]
+
+// ── Patrimoine / investissement ─────────────────────────────
+// Positions réalistes d'un foyer : PEA (ETF + actions), crypto, assurance-vie,
+// livret agrégé et un bien immobilier en valeur manuelle.
+export const demoHoldings: Holding[] = [
+  { id: 'hold-cw8', householdId: HOUSEHOLD_ID, kind: 'etf', symbol: 'CW8.PA', name: 'Amundi MSCI World', quantity: 18, costBasis: 8200, currency: 'EUR', envelope: 'PEA', manualValue: null, linkedAccountId: null, createdAt: isoDaysAgo(400), updatedAt: isoDaysAgo(0) },
+  { id: 'hold-ese', householdId: HOUSEHOLD_ID, kind: 'etf', symbol: 'ESE.PA', name: 'BNP S&P 500', quantity: 120, costBasis: 2350, currency: 'EUR', envelope: 'PEA', manualValue: null, linkedAccountId: null, createdAt: isoDaysAgo(360), updatedAt: isoDaysAgo(0) },
+  { id: 'hold-mc', householdId: HOUSEHOLD_ID, kind: 'stock', symbol: 'MC.PA', name: 'LVMH', quantity: 4, costBasis: 2640, currency: 'EUR', envelope: 'PEA', manualValue: null, linkedAccountId: null, createdAt: isoDaysAgo(300), updatedAt: isoDaysAgo(0) },
+  { id: 'hold-ai', householdId: HOUSEHOLD_ID, kind: 'stock', symbol: 'AI.PA', name: 'Air Liquide', quantity: 12, costBasis: 1980, currency: 'EUR', envelope: 'PEA', manualValue: null, linkedAccountId: null, createdAt: isoDaysAgo(280), updatedAt: isoDaysAgo(0) },
+  { id: 'hold-btc', householdId: HOUSEHOLD_ID, kind: 'crypto', symbol: 'BTC', name: 'Bitcoin', quantity: 0.12, costBasis: 5200, currency: 'EUR', envelope: 'crypto', manualValue: null, linkedAccountId: null, createdAt: isoDaysAgo(220), updatedAt: isoDaysAgo(0) },
+  { id: 'hold-eth', householdId: HOUSEHOLD_ID, kind: 'crypto', symbol: 'ETH', name: 'Ethereum', quantity: 1.4, costBasis: 3600, currency: 'EUR', envelope: 'crypto', manualValue: null, linkedAccountId: null, createdAt: isoDaysAgo(200), updatedAt: isoDaysAgo(0) },
+  { id: 'hold-av', householdId: HOUSEHOLD_ID, kind: 'fund', symbol: null, name: 'Assurance-vie Linxea', quantity: 1, costBasis: 14000, currency: 'EUR', envelope: 'AV', manualValue: 15240, linkedAccountId: null, createdAt: isoDaysAgo(500), updatedAt: isoDaysAgo(0) },
+  { id: 'hold-livret', householdId: HOUSEHOLD_ID, kind: 'livret', symbol: null, name: 'Livret A', quantity: 1, costBasis: 11200, currency: 'EUR', envelope: 'livret', manualValue: null, linkedAccountId: 'acc-ca-livret', createdAt: isoDaysAgo(600), updatedAt: isoDaysAgo(0) },
+  { id: 'hold-immo', householdId: HOUSEHOLD_ID, kind: 'real_estate', symbol: null, name: 'Studio locatif Lyon', quantity: 1, costBasis: 132000, currency: 'EUR', envelope: 'autre', manualValue: 158000, linkedAccountId: null, createdAt: isoDaysAgo(800), updatedAt: isoDaysAgo(0) },
+]
+
+/**
+ * Cours de référence (EUR) des symboles de démo. Les variations du jour sont
+ * dérivées de façon DÉTERMINISTE du symbole (stables entre rechargements),
+ * pour un rendu crédible sans appel réseau ni clé API.
+ */
+const demoPriceBase: Record<string, number> = {
+  'CW8.PA': 521.4,
+  'ESE.PA': 22.18,
+  'MC.PA': 712.5,
+  'AI.PA': 178.9,
+  BTC: 61450,
+  ETH: 3340,
+}
+
+/** Hash stable d'une chaîne → [0, 1). */
+function hash01(s: string): number {
+  let h = 2166136261
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i)
+    h = Math.imul(h, 16777619)
+  }
+  return ((h >>> 0) % 100000) / 100000
+}
+
+/** Cours simulé d'un symbole (prix de référence + variation du jour déterministe). */
+export function demoQuote(symbol: string): Quote {
+  const base = demoPriceBase[symbol] ?? 100 + hash01(symbol) * 400
+  const changePct = Math.round((hash01(symbol + 'd') * 6 - 3) * 100) / 100 // [-3 %, +3 %]
+  const price = Math.round(base * (1 + changePct / 200) * 100) / 100
+  return { symbol, price, currency: 'EUR', changePct, asOf: isoDaysAgo(0) }
+}
+
+/**
+ * Historique de valeur nette de démo : 26 points hebdomadaires en tendance
+ * haussière (déterministe). Le point du jour est (ré)écrit par l'app au montage
+ * avec la valeur calculée en direct, donc la courbe reste cohérente avec le héro.
+ */
+export const demoNetWorthSnapshots: NetWorthSnapshot[] = Array.from({ length: 26 }, (_, i) => {
+  const weeksAgo = 26 - i // 26 → 1
+  const progress = i / 25 // 0 → 1
+  const noise = (hash01(`nw${i}`) - 0.5) * 4000
+  const total = Math.round(176000 + progress * 40000 + noise)
+  const cash = Math.round(14000 + progress * 3000 + (hash01(`c${i}`) - 0.5) * 1500)
+  return {
+    id: `nw-${i}`,
+    householdId: HOUSEHOLD_ID,
+    asOf: dateDaysAgo(weeksAgo * 7),
+    total,
+    cash,
+    invested: total - cash,
+  }
+})
+
+/** Petit catalogue de symboles pour la recherche en mode démo. */
+const demoSymbolCatalog: SymbolSearchResult[] = [
+  { symbol: 'CW8.PA', name: 'Amundi MSCI World UCITS ETF', kind: 'etf', currency: 'EUR', exchange: 'Euronext Paris' },
+  { symbol: 'ESE.PA', name: 'BNP Paribas Easy S&P 500', kind: 'etf', currency: 'EUR', exchange: 'Euronext Paris' },
+  { symbol: 'PE500.PA', name: 'Amundi PEA S&P 500 ESG', kind: 'etf', currency: 'EUR', exchange: 'Euronext Paris' },
+  { symbol: 'MC.PA', name: 'LVMH Moët Hennessy', kind: 'stock', currency: 'EUR', exchange: 'Euronext Paris' },
+  { symbol: 'AI.PA', name: 'Air Liquide', kind: 'stock', currency: 'EUR', exchange: 'Euronext Paris' },
+  { symbol: 'OR.PA', name: "L'Oréal", kind: 'stock', currency: 'EUR', exchange: 'Euronext Paris' },
+  { symbol: 'TTE.PA', name: 'TotalEnergies', kind: 'stock', currency: 'EUR', exchange: 'Euronext Paris' },
+  { symbol: 'AAPL', name: 'Apple Inc.', kind: 'stock', currency: 'USD', exchange: 'NASDAQ' },
+  { symbol: 'MSFT', name: 'Microsoft Corp.', kind: 'stock', currency: 'USD', exchange: 'NASDAQ' },
+  { symbol: 'BTC', name: 'Bitcoin', kind: 'crypto', currency: 'EUR', exchange: 'Crypto' },
+  { symbol: 'ETH', name: 'Ethereum', kind: 'crypto', currency: 'EUR', exchange: 'Crypto' },
+]
+
+export function demoSymbolSearch(query: string): SymbolSearchResult[] {
+  const q = query.toLowerCase()
+  return demoSymbolCatalog
+    .filter((s) => s.symbol.toLowerCase().includes(q) || s.name.toLowerCase().includes(q))
+    .slice(0, 8)
+}
 
 export const demoSubscriptions: Subscription[] = [
   { id: 'sub-netflix', householdId: HOUSEHOLD_ID, merchantLabel: 'Netflix', amount: 19.99, frequency: 'monthly', nextExpectedDate: dateInDays(8), categoryId: 'cat-abos', isConfirmed: true, isActive: true },

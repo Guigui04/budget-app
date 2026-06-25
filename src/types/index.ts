@@ -97,6 +97,76 @@ export interface Goal {
   color: string
 }
 
+/** Classe d'actif d'une position de patrimoine. */
+export type HoldingKind =
+  | 'etf'
+  | 'stock'
+  | 'crypto'
+  | 'fund'
+  | 'livret'
+  | 'real_estate'
+  | 'cash'
+  | 'other'
+
+/** Enveloppe fiscale / contenant de la position. */
+export type HoldingEnvelope = 'PEA' | 'AV' | 'CTO' | 'crypto' | 'livret' | 'autre'
+
+/**
+ * Une ligne de patrimoine (action, ETF, crypto, livret, immobilier…).
+ * Les actifs cotés portent un `symbol` (valorisé via les cours réels) ; les
+ * actifs non cotés (immo, livret manuel) portent une `manualValue`. Un actif
+ * peut aussi refléter un compte agrégé via `linkedAccountId`.
+ */
+export interface Holding {
+  id: UUID
+  householdId: UUID
+  kind: HoldingKind
+  /** Symbole marché (ex. « CW8.PA », « BTC ») — null pour un actif non coté. */
+  symbol: string | null
+  name: string
+  quantity: number
+  /** Prix de revient total investi, en euros. */
+  costBasis: number
+  currency: string
+  envelope: HoldingEnvelope
+  /** Valeur saisie pour un actif non coté (immo, livret manuel) ; sinon null. */
+  manualValue: number | null
+  /** Compte bancaire reflété (livret agrégé) ; sinon null. */
+  linkedAccountId: UUID | null
+  createdAt: string
+  updatedAt: string
+}
+
+/** Cours de marché instantané d'un symbole. */
+export interface Quote {
+  symbol: string
+  price: number
+  currency: string
+  /** Variation du jour en pourcentage (ex. +1.8). */
+  changePct: number
+  asOf: string
+}
+
+/** Point d'historique de valeur nette (un par jour et par foyer). */
+export interface NetWorthSnapshot {
+  id: UUID
+  householdId: UUID
+  /** Date du point (YYYY-MM-DD). */
+  asOf: string
+  total: number
+  cash: number
+  invested: number
+}
+
+/** Résultat d'une recherche de symbole (ajout de position). */
+export interface SymbolSearchResult {
+  symbol: string
+  name: string
+  kind: HoldingKind
+  currency: string
+  exchange: string
+}
+
 export type SubscriptionFrequency = 'monthly' | 'yearly' | 'weekly'
 
 export interface Subscription {

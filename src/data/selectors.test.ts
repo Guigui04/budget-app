@@ -1,16 +1,20 @@
 import { describe, expect, it } from 'vitest'
-import type { Budget, Category, Goal, Subscription, Transaction } from '@/types'
+import type { Budget, Category, Goal, Holding, NetWorthSnapshot, Quote, Subscription, Transaction } from '@/types'
 import type { Account } from '@/types'
 import {
   activeSubscriptionsMonthlyCost,
   buildEnvelopes,
+  buildNetWorthSeries,
   categoryBreakdown,
   goalProgress,
   monthForecast,
   monthIncome,
   monthSpending,
+  netWorth,
+  portfolioSummary,
   spentForCategory,
   totalBalance,
+  valuateHolding,
 } from './selectors'
 
 const REF = new Date('2026-06-15T12:00:00Z')
@@ -298,5 +302,83 @@ describe('monthForecast', () => {
     const f = monthForecast([account(1000)], txns, FREF)
     expect(f.dailyBurn).toBeGreaterThan(0)
     expect(f.variableProjected).toBeGreaterThan(0)
+  })
+})
+
+describe('patrimoine / investissement', () => {
+  function holding(partial: Partial<Holding>): Holding {
+    return {
+      id: 'h1', householdId: 'h', kind: 'etf', symbol: 'CW8.PA', name: 'World',
+      quantity: 10, costBasis: 4000, currency: 'EUR', envelope: 'PEA',
+      manualValue: null, linkedAccountId: null, createdAt: '', updatedAt: '',
+      ...partial,
+    }
+  }
+  function acc(id: string, balance: number): Account {
+    return {
+      id, bankConnectionId: 'bc', householdId: 'h', externalAccountId: 'x',
+      name: 'C', iban: 'FR', currency: 'EUR', balance, balanceUpdatedAt: '', kind: 'savings',
+    }
+  }
+  const quote = (symbol: string, price: number, changePct = 0): Quote => ({ symbol, price, currency: 'EUR', changePct, asOf: '' })
+
+  it('valorise une position cotée au cours du marché (quantité × prix)', () => {
+    const q = new Map([['CW8.PA', quote('CW8.PA', 500, 2)]])
+    const v = valuateHolding(holding({ quantity: 10, costBasis: 4000 }), q, [])
+    expect(v.value).toBe(5000)
+    expect(v.gain).toBe(1000)
+    expect(v.hasLivePrice).toBe(true)
+    expect(v.dayChange).toBeCloseTo(100, 5) // 5000 × 2 %
+  })
+
+  it('utilise la valeur manuelle pour un actif non coté', () => {
+    const v = valuateHolding(holding({ symbol: null, kind: 'real_estate', manualValue: 158000, costBasis: 132000 }), new Map(), [])
+    expect(v.value).toBe(158000)
+    expect(v.hasLivePrice).toBe(false)
+    expect(v.gain).toBe(26000)
+  })
+
+  it('reflète le solde du compte pour une position liée', () => {
+    const v = valuateHolding(holding({ symbol: null, kind: 'livret', linkedAccountId: 'acc-livret', costBasis: 9000 }), new Map(), [acc('acc-livret', 11200)])
+    expect(v.value).toBe(11200)
+  })
+
+  it('agrège le portefeuille (valeur, +/- value, répartition)', () => {
+    const holdings = [
+      holding({ id: 'a', symbol: 'CW8.PA', kind: 'etf', quantity: 10, costBasis: 4000 }),
+      holding({ id: 'b', symbol: null, kind: 'real_estate', envelope: 'autre', manualValue: 158000, costBasis: 132000 }),
+    ]
+    const q = new Map([['CW8.PA', quote('CW8.PA', 500, 0)]])
+    const s = portfolioSummary(holdings, q, [])
+    expect(s.totalValue).toBe(163000)
+    expect(s.totalCost).toBe(136000)
+    expect(s.gain).toBe(27000)
+    expect(s.byKind[0].key).toBe('real_estate') // trié par valeur décroissante
+  })
+
+  it('construit la série de valeur nette et le delta sur la période', () => {
+    const snap = (asOf: string, total: number): NetWorthSnapshot => ({ id: asOf, householdId: 'h', asOf, total, cash: 0, invested: total })
+    const ref = new Date('2026-06-15T12:00:00Z')
+    const snaps = [snap('2026-01-10', 100000), snap('2026-05-20', 120000), snap('2026-06-14', 130000)]
+    const all = buildNetWorthSeries(snaps, 'ALL', ref)
+    expect(all.points).toHaveLength(3)
+    expect(all.delta).toBe(30000) // 130000 − 100000
+    // Sur 1 mois, seul le point du 20/05 et du 14/06 entrent → delta 10000.
+    const m1 = buildNetWorthSeries(snaps, '1M', ref)
+    expect(m1.delta).toBe(10000)
+  })
+
+  it('calcule la valeur nette sans double-compter un livret agrégé', () => {
+    const holdings = [
+      holding({ id: 'etf', symbol: 'CW8.PA', kind: 'etf', quantity: 10, costBasis: 4000 }),
+      holding({ id: 'liv', symbol: null, kind: 'livret', linkedAccountId: 'acc-livret', costBasis: 11200 }),
+    ]
+    const q = new Map([['CW8.PA', quote('CW8.PA', 500, 0)]])
+    const accounts = [acc('acc-courant', 2000), acc('acc-livret', 11200)]
+    const nw = netWorth(accounts, holdings, q)
+    // Liquidités = 2000 + 11200 ; investi = ETF 5000 (le livret lié est exclu).
+    expect(nw.cash).toBe(13200)
+    expect(nw.invested).toBe(5000)
+    expect(nw.total).toBe(18200)
   })
 })

@@ -13,6 +13,10 @@ verify_jwt = true
 [functions.categorize]
 verify_jwt = true
 
+# Cours de marché (appelé depuis la PWA avec le JWT de l'utilisateur).
+[functions.quotes]
+verify_jwt = true
+
 # Cron-invoked functions run with the service role, no user JWT.
 [functions.bank-sync]
 verify_jwt = false

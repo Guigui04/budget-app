@@ -1,5 +1,18 @@
 /** Pure computation helpers over the domain data (no I/O). */
-import type { Account, Budget, BudgetEnvelope, Category, Goal, Subscription, Transaction } from '@/types'
+import type {
+  Account,
+  Budget,
+  BudgetEnvelope,
+  Category,
+  Goal,
+  Holding,
+  HoldingEnvelope,
+  HoldingKind,
+  NetWorthSnapshot,
+  Quote,
+  Subscription,
+  Transaction,
+} from '@/types'
 
 export function startOfMonth(date = new Date()): Date {
   return new Date(date.getFullYear(), date.getMonth(), 1)
@@ -501,4 +514,164 @@ export function goalProgress(goal: Goal): GoalProgress {
     monthlyNeeded = remaining / months
   }
   return { goal, ratio, remaining, monthlyNeeded }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Patrimoine & investissement
+// Valorisation 100 % déterministe : un actif coté vaut quantité × cours réel,
+// un actif lié à un compte vaut le solde du compte, sinon sa valeur manuelle.
+// ─────────────────────────────────────────────────────────────────────────
+
+export interface HoldingValuation {
+  holding: Holding
+  quote: Quote | null
+  /** Valeur actuelle en euros. */
+  value: number
+  /** Prix de revient (capital investi). */
+  cost: number
+  /** value − cost. */
+  gain: number
+  /** gain / cost (0 si cost nul). */
+  gainPct: number
+  /** Variation du jour en euros (uniquement si cours réel). */
+  dayChange: number
+  /** True quand un cours de marché alimente la valeur. */
+  hasLivePrice: boolean
+}
+
+/** Valorise une position à partir des cours et des soldes de comptes. */
+export function valuateHolding(
+  holding: Holding,
+  quotes: Map<string, Quote>,
+  accounts: Account[],
+): HoldingValuation {
+  const quote = holding.symbol ? quotes.get(holding.symbol) ?? null : null
+  let value: number
+  let hasLivePrice = false
+  if (holding.symbol && quote) {
+    value = holding.quantity * quote.price
+    hasLivePrice = true
+  } else if (holding.linkedAccountId) {
+    value = accounts.find((a) => a.id === holding.linkedAccountId)?.balance ?? holding.manualValue ?? holding.costBasis
+  } else if (holding.manualValue != null) {
+    value = holding.manualValue
+  } else {
+    value = holding.costBasis
+  }
+  const cost = holding.costBasis
+  const gain = value - cost
+  const gainPct = cost > 0 ? gain / cost : 0
+  const dayChange = hasLivePrice && quote ? value * (quote.changePct / 100) : 0
+  return { holding, quote, value, cost, gain, gainPct, dayChange, hasLivePrice }
+}
+
+export interface AllocationSlice<K extends string> {
+  key: K
+  value: number
+  ratio: number
+}
+
+export interface PortfolioSummary {
+  valuations: HoldingValuation[]
+  /** Valeur totale de toutes les positions (affichage portefeuille). */
+  totalValue: number
+  /** Capital total investi (somme des prix de revient). */
+  totalCost: number
+  /** Plus/moins-value latente totale. */
+  gain: number
+  gainPct: number
+  /** Variation du jour cumulée (positions cotées). */
+  dayChange: number
+  dayChangePct: number
+  /** Répartition par classe d'actif (donut). */
+  byKind: AllocationSlice<HoldingKind>[]
+  /** Répartition par enveloppe (PEA, AV…). */
+  byEnvelope: AllocationSlice<HoldingEnvelope>[]
+}
+
+function allocate<K extends string>(entries: [K, number][], total: number): AllocationSlice<K>[] {
+  return entries
+    .map(([key, value]) => ({ key, value, ratio: total > 0 ? value / total : 0 }))
+    .sort((a, b) => b.value - a.value)
+}
+
+export function portfolioSummary(holdings: Holding[], quotes: Map<string, Quote>, accounts: Account[]): PortfolioSummary {
+  const valuations = holdings.map((h) => valuateHolding(h, quotes, accounts))
+  const totalValue = valuations.reduce((s, v) => s + v.value, 0)
+  const totalCost = valuations.reduce((s, v) => s + v.cost, 0)
+  const gain = totalValue - totalCost
+  const dayChange = valuations.reduce((s, v) => s + v.dayChange, 0)
+  const prevValue = totalValue - dayChange
+
+  const kindTotals = new Map<HoldingKind, number>()
+  const envTotals = new Map<HoldingEnvelope, number>()
+  for (const v of valuations) {
+    kindTotals.set(v.holding.kind, (kindTotals.get(v.holding.kind) ?? 0) + v.value)
+    envTotals.set(v.holding.envelope, (envTotals.get(v.holding.envelope) ?? 0) + v.value)
+  }
+
+  return {
+    valuations,
+    totalValue,
+    totalCost,
+    gain,
+    gainPct: totalCost > 0 ? gain / totalCost : 0,
+    dayChange,
+    dayChangePct: prevValue > 0 ? dayChange / prevValue : 0,
+    byKind: allocate([...kindTotals.entries()], totalValue),
+    byEnvelope: allocate([...envTotals.entries()], totalValue),
+  }
+}
+
+export type TrendRange = '1M' | '6M' | '1Y' | 'ALL'
+
+export interface NetWorthSeries {
+  points: { asOf: string; total: number }[]
+  /** Variation sur la période affichée (€). */
+  delta: number
+  /** Variation sur la période affichée (ratio). */
+  deltaPct: number
+}
+
+const RANGE_DAYS: Record<Exclude<TrendRange, 'ALL'>, number> = { '1M': 31, '6M': 184, '1Y': 366 }
+
+/**
+ * Série d'historique de valeur nette filtrée sur une plage. Tri chronologique,
+ * delta = dernier − premier point de la fenêtre.
+ */
+export function buildNetWorthSeries(snapshots: NetWorthSnapshot[], range: TrendRange = '6M', ref = new Date()): NetWorthSeries {
+  const sorted = [...snapshots].sort((a, b) => a.asOf.localeCompare(b.asOf))
+  let windowed = sorted
+  if (range !== 'ALL') {
+    const cutoff = new Date(ref)
+    cutoff.setDate(cutoff.getDate() - RANGE_DAYS[range])
+    const cutoffIso = cutoff.toISOString().slice(0, 10)
+    windowed = sorted.filter((s) => s.asOf >= cutoffIso)
+  }
+  const points = windowed.map((s) => ({ asOf: s.asOf, total: s.total }))
+  const first = points[0]?.total ?? 0
+  const last = points[points.length - 1]?.total ?? 0
+  const delta = last - first
+  return { points, delta, deltaPct: first > 0 ? delta / first : 0 }
+}
+
+export interface NetWorth {
+  total: number
+  /** Liquidités bancaires (comptes courants + livrets agrégés). */
+  cash: number
+  /** Valeur des investissements hors comptes déjà agrégés (anti double-comptage). */
+  invested: number
+}
+
+/**
+ * Valeur nette du foyer = liquidités bancaires + investissements.
+ * Une position liée à un compte (livret agrégé) reflète une somme DÉJÀ comptée
+ * dans les soldes : on l'exclut du cumul « invested » pour ne pas la doubler.
+ */
+export function netWorth(accounts: Account[], holdings: Holding[], quotes: Map<string, Quote>): NetWorth {
+  const cash = totalBalance(accounts)
+  const invested = holdings
+    .filter((h) => h.linkedAccountId === null)
+    .reduce((s, h) => s + valuateHolding(h, quotes, accounts).value, 0)
+  return { total: cash + invested, cash, invested }
 }
