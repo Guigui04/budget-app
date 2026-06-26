@@ -1136,3 +1136,53 @@ export function financialHealth(
     evaluatedCount: evaluated.length,
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// Auto-budget — suggestion d'enveloppes à partir des dépenses réelles
+// Pour chaque catégorie de dépense, on propose un budget mensuel = médiane des
+// dépenses des derniers mois (robuste aux pics), arrondie. 100 % déterministe.
+// ─────────────────────────────────────────────────────────────────────────
+
+export interface BudgetSuggestion {
+  categoryId: string
+  /** Budget mensuel suggéré (arrondi à 5 € supérieur). */
+  suggested: number
+  /** Dépense mensuelle typique observée (médiane brute). */
+  typical: number
+  /** Nombre de mois (sur la fenêtre) avec des dépenses dans la catégorie. */
+  monthsObserved: number
+  /** Budget actuel s'il existe, sinon null. */
+  current: number | null
+}
+
+/**
+ * Suggère un budget par catégorie de dépense à partir de l'historique.
+ * `typical` = médiane des dépenses mensuelles sur `windowMonths` mois pleins
+ * (zéros inclus) → une catégorie sporadique (médiane nulle) n'est pas suggérée.
+ */
+export function suggestBudgets(
+  transactions: Transaction[],
+  categories: Category[],
+  budgets: Budget[],
+  ref = new Date(),
+  windowMonths = 3,
+): BudgetSuggestion[] {
+  const base = startOfMonth(ref)
+  const out: BudgetSuggestion[] = []
+  for (const cat of categories) {
+    // Catégories de revenu/épargne exclues (mêmes règles que la page Budgets).
+    if (cat.name === 'Salaire' || cat.name === 'Épargne') continue
+    const monthly: number[] = []
+    for (let i = 1; i <= windowMonths; i++) {
+      monthly.push(spentForCategory(transactions, cat.id, monthOffset(base, -i)))
+    }
+    const monthsObserved = monthly.filter((v) => v > 0).length
+    if (monthsObserved === 0) continue
+    const typical = median(monthly)
+    if (typical <= 0) continue // dépense trop sporadique pour un budget mensuel
+    const suggested = Math.max(5, Math.ceil(typical / 5) * 5)
+    const current = budgets.find((b) => b.categoryId === cat.id)?.amount ?? null
+    out.push({ categoryId: cat.id, suggested, typical, monthsObserved, current })
+  }
+  return out.sort((a, b) => b.suggested - a.suggested)
+}

@@ -9,6 +9,7 @@ import {
   computeSavingsPlan,
   estimateMonthlyPace,
   financialHealth,
+  suggestBudgets,
   goalProgress,
   goalProjection,
   monthForecast,
@@ -584,5 +585,59 @@ describe('financialHealth', () => {
     expect(h.score).toBeNull()
     expect(h.grade).toBeNull()
     expect(h.evaluatedCount).toBe(0)
+  })
+})
+
+describe('suggestBudgets', () => {
+  const REF_B = new Date('2026-06-15T12:00:00Z')
+  const cat = (id: string, name = id): Category => ({ id, householdId: 'h', name, icon: 'c', color: '#000', parentId: null, isDefault: true })
+  const bud = (categoryId: string, amount: number): Budget => ({ id: `b-${categoryId}`, householdId: 'h', categoryId, amount, period: 'monthly', createdAt: '2026-01-01' })
+
+  it('suggère la médiane mensuelle arrondie à 5 € supérieur', () => {
+    const txns = [
+      txn({ id: '1', amount: -120, categoryId: 'cat-food', bookingDate: '2026-05-10' }),
+      txn({ id: '2', amount: -101, categoryId: 'cat-food', bookingDate: '2026-04-10' }),
+      txn({ id: '3', amount: -110, categoryId: 'cat-food', bookingDate: '2026-03-10' }),
+    ]
+    const s = suggestBudgets(txns, [cat('cat-food')], [], REF_B)
+    expect(s).toHaveLength(1)
+    expect(s[0].typical).toBe(110) // médiane de [120,101,110]
+    expect(s[0].suggested).toBe(110) // déjà multiple de 5
+    expect(s[0].monthsObserved).toBe(3)
+    expect(s[0].current).toBeNull()
+  })
+
+  it('arrondit au multiple de 5 supérieur', () => {
+    const txns = [
+      txn({ id: '1', amount: -101, categoryId: 'cat-food', bookingDate: '2026-05-10' }),
+      txn({ id: '2', amount: -101, categoryId: 'cat-food', bookingDate: '2026-04-10' }),
+    ]
+    const s = suggestBudgets(txns, [cat('cat-food')], [], REF_B)
+    expect(s[0].suggested).toBe(105) // ceil(101/5)*5
+  })
+
+  it('ignore une dépense sporadique (médiane nulle)', () => {
+    const txns = [txn({ id: '1', amount: -200, categoryId: 'cat-food', bookingDate: '2026-05-10' })] // 1 mois sur 3
+    const s = suggestBudgets(txns, [cat('cat-food')], [], REF_B)
+    expect(s).toHaveLength(0)
+  })
+
+  it('exclut les catégories de revenu/épargne et les dépenses du mois courant', () => {
+    const txns = [
+      txn({ id: '1', amount: 3000, categoryId: 'cat-sal', bookingDate: '2026-05-01' }),
+      txn({ id: '2', amount: -90, categoryId: 'cat-food', bookingDate: '2026-06-10' }), // mois courant, hors fenêtre
+    ]
+    const s = suggestBudgets(txns, [cat('cat-sal', 'Salaire'), cat('cat-food')], [], REF_B)
+    expect(s).toHaveLength(0)
+  })
+
+  it('remonte le budget actuel pour un ajustement', () => {
+    const txns = [
+      txn({ id: '1', amount: -200, categoryId: 'cat-food', bookingDate: '2026-05-10' }),
+      txn({ id: '2', amount: -200, categoryId: 'cat-food', bookingDate: '2026-04-10' }),
+    ]
+    const s = suggestBudgets(txns, [cat('cat-food')], [bud('cat-food', 100)], REF_B)
+    expect(s[0].current).toBe(100)
+    expect(s[0].suggested).toBe(200)
   })
 })
