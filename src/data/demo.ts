@@ -10,6 +10,7 @@ import type {
   Budget,
   Category,
   Goal,
+  GoalContribution,
   Holding,
   Household,
   NetWorthSnapshot,
@@ -103,6 +104,26 @@ export const demoGoals: Goal[] = [
   { id: 'goal-vacances', householdId: HOUSEHOLD_ID, name: 'Vacances Japon', targetAmount: 6000, currentAmount: 3850, targetDate: dateInDays(210), linkedAccountId: null, color: '#f0784a' },
   { id: 'goal-secours', householdId: HOUSEHOLD_ID, name: "Fonds d'urgence", targetAmount: 12000, currentAmount: 11200, targetDate: null, linkedAccountId: 'acc-ca-livret', color: '#46c79a' },
   { id: 'goal-canape', householdId: HOUSEHOLD_ID, name: 'Nouveau canapé', targetAmount: 1500, currentAmount: 540, targetDate: dateInDays(90), linkedAccountId: null, color: '#e8b24c' },
+]
+
+/**
+ * Historique de versements de démo — un rythme régulier sur les derniers mois,
+ * pour que la courbe de projection et l'ETA aient de la matière. Attribué aux
+ * deux membres du foyer (foyer partagé).
+ */
+export const demoGoalContributions: GoalContribution[] = [
+  // Vacances Japon : ~430 €/mois à deux.
+  { id: 'gc-v1', householdId: HOUSEHOLD_ID, goalId: 'goal-vacances', amount: 250, contributedAt: dateDaysAgo(95), authorUserId: 'u-guillaume', authorName: 'Guillaume' },
+  { id: 'gc-v2', householdId: HOUSEHOLD_ID, goalId: 'goal-vacances', amount: 180, contributedAt: dateDaysAgo(92), authorUserId: 'u-maeva', authorName: 'Maëva' },
+  { id: 'gc-v3', householdId: HOUSEHOLD_ID, goalId: 'goal-vacances', amount: 250, contributedAt: dateDaysAgo(64), authorUserId: 'u-guillaume', authorName: 'Guillaume' },
+  { id: 'gc-v4', householdId: HOUSEHOLD_ID, goalId: 'goal-vacances', amount: 200, contributedAt: dateDaysAgo(61), authorUserId: 'u-maeva', authorName: 'Maëva' },
+  { id: 'gc-v5', householdId: HOUSEHOLD_ID, goalId: 'goal-vacances', amount: 280, contributedAt: dateDaysAgo(32), authorUserId: 'u-guillaume', authorName: 'Guillaume' },
+  { id: 'gc-v6', householdId: HOUSEHOLD_ID, goalId: 'goal-vacances', amount: 160, contributedAt: dateDaysAgo(30), authorUserId: 'u-maeva', authorName: 'Maëva' },
+  { id: 'gc-v7', householdId: HOUSEHOLD_ID, goalId: 'goal-vacances', amount: 300, contributedAt: dateDaysAgo(4), authorUserId: 'u-guillaume', authorName: 'Guillaume' },
+  // Canapé : ~180 €/mois.
+  { id: 'gc-c1', householdId: HOUSEHOLD_ID, goalId: 'goal-canape', amount: 180, contributedAt: dateDaysAgo(70), authorUserId: 'u-maeva', authorName: 'Maëva' },
+  { id: 'gc-c2', householdId: HOUSEHOLD_ID, goalId: 'goal-canape', amount: 180, contributedAt: dateDaysAgo(38), authorUserId: 'u-maeva', authorName: 'Maëva' },
+  { id: 'gc-c3', householdId: HOUSEHOLD_ID, goalId: 'goal-canape', amount: 180, contributedAt: dateDaysAgo(7), authorUserId: 'u-guillaume', authorName: 'Guillaume' },
 ]
 
 // ── Patrimoine / investissement ─────────────────────────────

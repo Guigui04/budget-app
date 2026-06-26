@@ -6,8 +6,11 @@ import {
   buildEnvelopes,
   buildNetWorthSeries,
   categoryBreakdown,
+  estimateMonthlyPace,
   goalProgress,
+  goalProjection,
   monthForecast,
+  projectInvestment,
   monthIncome,
   monthSpending,
   netWorth,
@@ -380,5 +383,90 @@ describe('patrimoine / investissement', () => {
     expect(nw.cash).toBe(13200)
     expect(nw.invested).toBe(5000)
     expect(nw.total).toBe(18200)
+  })
+})
+
+describe('estimateMonthlyPace', () => {
+  const REF_P = new Date('2026-06-15T12:00:00Z')
+  it('retourne 0 sans versement', () => {
+    expect(estimateMonthlyPace([], 6, REF_P)).toBe(0)
+  })
+  it('moyenne les versements récents par mois couvert', () => {
+    const contribs = [
+      { amount: 200, contributedAt: '2026-04-15' },
+      { amount: 200, contributedAt: '2026-05-15' },
+      { amount: 200, contributedAt: '2026-06-10' },
+    ]
+    // ~2 mois entre le 15/04 et le 15/06 → 600 / 2 = 300.
+    expect(estimateMonthlyPace(contribs, 6, REF_P)).toBeCloseTo(300)
+  })
+  it('ignore les versements hors fenêtre', () => {
+    const contribs = [
+      { amount: 1000, contributedAt: '2024-01-01' }, // hors fenêtre 6 mois
+      { amount: 150, contributedAt: '2026-06-01' },
+    ]
+    expect(estimateMonthlyPace(contribs, 6, REF_P)).toBeCloseTo(150)
+  })
+})
+
+describe('goalProjection', () => {
+  const REF_P = new Date('2026-06-15T12:00:00Z')
+  const base: Goal = {
+    id: 'g', householdId: 'h', name: 'Voiture',
+    targetAmount: 1000, currentAmount: 400, targetDate: null, linkedAccountId: null, color: '#000',
+  }
+  it('projette une ETA au rythme historique', () => {
+    const p = goalProjection(base, 200, REF_P)
+    expect(p.paceSource).toBe('history')
+    expect(p.etaMonths).toBe(3) // (1000-400)/200 = 3
+    expect(p.points[0].isStart).toBe(true)
+    expect(p.points[0].value).toBe(400)
+    expect(p.points[p.points.length - 1].value).toBe(1000) // clampé à la cible
+  })
+  it('retombe sur le versement nécessaire quand pas d’historique', () => {
+    const withDate = { ...base, targetDate: '2026-09-15' }
+    const p = goalProjection(withDate, 0, REF_P)
+    expect(p.paceSource).toBe('needed')
+    expect(p.monthlyNeeded).not.toBeNull()
+  })
+  it('signale objectif atteint', () => {
+    const p = goalProjection({ ...base, currentAmount: 1000 }, 0, REF_P)
+    expect(p.reached).toBe(true)
+    expect(p.etaMonths).toBe(0)
+    expect(p.milestones.every((m) => m.reached)).toBe(true)
+  })
+  it('évalue onTrack vs la date cible', () => {
+    // Rythme 200/mois → 3 mois → atteinte ~15/09 ; cible 31/12 → dans les temps.
+    const ok = goalProjection({ ...base, targetDate: '2026-12-31' }, 200, REF_P)
+    expect(ok.onTrack).toBe(true)
+    // Rythme 50/mois → 12 mois → bien après une cible au 31/08.
+    const late = goalProjection({ ...base, targetDate: '2026-08-31' }, 50, REF_P)
+    expect(late.onTrack).toBe(false)
+  })
+  it('marque les jalons franchis', () => {
+    const p = goalProjection({ ...base, currentAmount: 500 }, 100, REF_P) // 50 %
+    expect(p.milestones.find((m) => m.ratio === 0.5)?.reached).toBe(true)
+    expect(p.milestones.find((m) => m.ratio === 0.75)?.reached).toBe(false)
+  })
+})
+
+describe('projectInvestment', () => {
+  it('capitalise mensuellement initial + versements', () => {
+    const r = projectInvestment({ initial: 1000, monthly: 100, years: 10, annualRate: 0.06 })
+    expect(r.totalInvested).toBe(1000 + 100 * 120) // 13 000
+    expect(r.finalValue).toBeGreaterThan(r.totalInvested) // intérêts composés
+    expect(r.points[0]).toEqual({ year: 0, invested: 1000, value: 1000 })
+    expect(r.points[r.points.length - 1].year).toBe(10)
+    expect(r.gainPct).toBeCloseTo(r.totalGain / r.totalInvested)
+  })
+  it('sans rendement, valeur = versements', () => {
+    const r = projectInvestment({ initial: 0, monthly: 50, years: 2, annualRate: 0 })
+    expect(r.finalValue).toBeCloseTo(50 * 24)
+    expect(r.totalGain).toBeCloseTo(0)
+  })
+  it('gère une durée nulle', () => {
+    const r = projectInvestment({ initial: 500, monthly: 100, years: 0, annualRate: 0.06 })
+    expect(r.finalValue).toBe(500)
+    expect(r.points).toHaveLength(1)
   })
 })

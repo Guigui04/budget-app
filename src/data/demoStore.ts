@@ -10,6 +10,7 @@ import type {
   Category,
   CategorizationRule,
   Goal,
+  GoalContribution,
   Holding,
   NetWorthSnapshot,
   Quote,
@@ -23,6 +24,7 @@ import {
   demoCategories,
   demoConnections,
   demoGoals,
+  demoGoalContributions,
   demoHoldings,
   demoNetWorthSnapshots,
   demoQuote,
@@ -36,6 +38,7 @@ interface DemoState {
   categories: Category[]
   budgets: Budget[]
   goals: Goal[]
+  goalContributions: GoalContribution[]
   subscriptions: Subscription[]
   alerts: Alert[]
   connections: BankConnection[]
@@ -50,6 +53,7 @@ const state: DemoState = {
   categories: demoCategories,
   budgets: demoBudgets,
   goals: demoGoals,
+  goalContributions: demoGoalContributions,
   subscriptions: demoSubscriptions,
   alerts: demoAlerts,
   connections: demoConnections,
@@ -123,14 +127,27 @@ export const demoStore = {
     }
   },
 
-  addGoalContribution(goalId: string, amount: number): void {
+  addGoalContribution(goalId: string, amount: number, author?: { id: string; name: string } | null): void {
     state.goals = state.goals.map((g) =>
       g.id === goalId ? { ...g, currentAmount: g.currentAmount + amount } : g,
     )
+    state.goalContributions = [
+      ...state.goalContributions,
+      {
+        id: `gc-${Date.now()}`,
+        householdId: 'hh-foyer',
+        goalId,
+        amount,
+        contributedAt: new Date().toISOString().slice(0, 10),
+        authorUserId: author?.id ?? null,
+        authorName: author?.name ?? null,
+      },
+    ]
   },
 
   deleteGoal(goalId: string): void {
     state.goals = state.goals.filter((g) => g.id !== goalId)
+    state.goalContributions = state.goalContributions.filter((c) => c.goalId !== goalId)
   },
 
   upsertHolding(holding: Omit<Holding, 'id' | 'householdId' | 'createdAt' | 'updatedAt'> & { id?: string }): void {

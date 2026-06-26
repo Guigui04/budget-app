@@ -9,6 +9,7 @@ import type {
   CategorySource,
   ConnectionStatus,
   Goal,
+  GoalContribution,
   Holding,
   HoldingEnvelope,
   HoldingKind,
@@ -91,6 +92,16 @@ export const mapGoal = (r: Row): Goal => ({
   targetDate: asNullableString(r.target_date),
   linkedAccountId: asNullableString(r.linked_account_id),
   color: asString(r.color, '#46c79a'),
+})
+
+export const mapGoalContribution = (r: Row): GoalContribution => ({
+  id: asString(r.id),
+  householdId: asString(r.household_id),
+  goalId: asString(r.goal_id),
+  amount: Number(r.amount ?? 0),
+  contributedAt: asString(r.contributed_at),
+  authorUserId: asNullableString(r.author_user_id),
+  authorName: asNullableString(r.author_name),
 })
 
 export const mapHolding = (r: Row): Holding => ({
