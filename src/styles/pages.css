@@ -3944,3 +3944,153 @@
   background: var(--positive-soft);
   color: var(--positive);
 }
+
+/* ════════════════════════════════════════════════════════════
+   SwipeDeck — pager horizontal (cartes empilées swipables)
+   ════════════════════════════════════════════════════════════ */
+.swipe-deck {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.swipe-deck-viewport {
+  /* Laisse dépasser la carte suivante au bord droit ; coupe au-delà. */
+  overflow: hidden;
+}
+
+.swipe-deck-track {
+  display: flex;
+  align-items: stretch;
+  /* Le drag horizontal est géré par motion ; on laisse le scroll vertical natif. */
+  touch-action: pan-y;
+}
+
+/* Carte active = pleine ; cartes voisines floutées/estompées (« peek »). */
+.swipe-deck-panel {
+  flex: 0 0 auto;
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+.swipe-deck-panel.is-peek {
+  filter: blur(3px);
+  opacity: 0.5;
+}
+.swipe-deck-panel > .card { height: 100%; }
+
+/* Pager : libellé du panneau actif + pastilles cliquables bien visibles */
+.swipe-deck-pager {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: 2px;
+}
+
+.swipe-deck-current {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.swipe-deck-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 8px 14px;
+  border-radius: var(--r-full);
+  background: var(--surface-2);
+}
+
+.swipe-deck-dots button {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--r-full);
+  background: var(--text-faint);
+  opacity: 0.45;
+  transition: width 0.25s ease, opacity 0.25s ease, background 0.25s ease;
+}
+.swipe-deck-dots button.active {
+  width: 26px;
+  opacity: 1;
+  background: var(--accent);
+}
+
+.deck-foot-link {
+  margin-top: var(--sp-2);
+  align-self: flex-start;
+}
+
+/* ════════════════════════════════════════════════════════════
+   Évolution mensuelle (graphe enrichi) — remplit la carte
+   ════════════════════════════════════════════════════════════ */
+.evo {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: var(--sp-3);
+}
+
+.evo-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.evo-value {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+.evo-chart {
+  flex: 1;
+  min-height: 150px;
+}
+
+.evo-legend {
+  display: flex;
+  justify-content: center;
+  gap: var(--sp-4);
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.evo-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 5px;
+  border-radius: 3px;
+  vertical-align: middle;
+}
+.evo-dot.dep { background: var(--accent); }
+.evo-dot.rev { background: var(--positive); }
+
+.evo-tip {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 9px 11px;
+  border-radius: var(--r-sm);
+  background: var(--surface-solid);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.evo-tip-month { color: var(--text-muted); font-size: 0.72rem; font-weight: 800; }
+.evo-tip-line { display: flex; align-items: center; gap: 6px; }
+.evo-tip-line b { margin-left: auto; }
+
+/* Lien « Gérer les budgets » ancré en bas pour remplir la carte Budgets */
+.deck-foot-link {
+  margin-top: auto;
+  padding-top: var(--sp-1);
+  align-self: flex-start;
+}
+

@@ -13,6 +13,7 @@ import {
 import { DonutChart } from '@/components/charts/DonutChart'
 import { MonthlyBars } from '@/components/charts/MonthlyBars'
 import { ProgressBar } from '@/components/ui/ProgressBar'
+import { SwipeDeck, type DeckPanel } from '@/components/ui/SwipeDeck'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { TransactionRow } from '@/components/TransactionRow'
 import { BalanceStack } from './BalanceStack'
@@ -53,6 +54,64 @@ export function DashboardPage() {
   const recentAlerts = alerts.slice(0, 3)
   const stale = accounts.length > 0 && isStale(summary.lastSync)
   const todoCount = transactions.filter((t) => t.categoryId === null).length
+
+  // Deck swipable : on empile les cartes analytiques (Budgets · Répartition ·
+  // Évolution) au même endroit pour alléger l'accueil.
+  const deckPanels: DeckPanel[] = []
+  if (summary.envelopes.length > 0) {
+    deckPanels.push({
+      key: 'budgets',
+      label: 'Budgets',
+      node: (
+        <div className="card card-pad stack-3">
+          {summary.envelopes.map((env) => (
+            <div key={env.budget.id} className="mini-env">
+              <CategoryIcon icon={env.category.icon} color={env.category.color} size={36} />
+              <div className="mini-env-main">
+                <div className="mini-env-top">
+                  <span>{env.category.name}</span>
+                  <span className="num">{formatMoneyCompact(env.spent)} / {formatMoneyCompact(env.budget.amount)}</span>
+                </div>
+                <ProgressBar ratio={env.ratio} semantic />
+              </div>
+            </div>
+          ))}
+          <button className="link-btn deck-foot-link" onClick={() => { haptic('tap'); navigate('/budgets') }}>
+            Gérer les budgets <ChevronRight size={16} />
+          </button>
+        </div>
+      ),
+    })
+  }
+  if (summary.breakdown.length > 0) {
+    deckPanels.push({
+      key: 'breakdown',
+      label: 'Répartition',
+      node: (
+        <div className="card card-pad">
+          <DonutChart slices={summary.breakdown} total={summary.spending} />
+          <ul className="legend">
+            {summary.breakdown.map((s) => (
+              <li key={s.category.id}>
+                <span className="legend-dot" style={{ background: s.category.color }} />
+                <span className="legend-name">{s.category.name}</span>
+                <span className="legend-val num">{formatMoneyCompact(s.amount)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ),
+    })
+  }
+  deckPanels.push({
+    key: 'evolution',
+    label: 'Évolution',
+    node: (
+      <div className="card card-pad">
+        <MonthlyBars points={summary.evolution} />
+      </div>
+    ),
+  })
 
   return (
     <div className="page">
@@ -109,60 +168,12 @@ export function DashboardPage() {
         </section>
       )}
 
-      {/* Budgets */}
-      {summary.envelopes.length > 0 && (
-        <section className="rise" style={{ animationDelay: '190ms' }}>
-          <div className="row-head">
-            <h2 className="block-title">Budgets</h2>
-            <button className="link-btn" onClick={() => { haptic('tap'); navigate('/budgets') }}>Tout voir <ChevronRight size={16} /></button>
-          </div>
-          <div className="card card-pad stack-3">
-            {summary.envelopes.map((env) => (
-              <div key={env.budget.id} className="mini-env">
-                <CategoryIcon icon={env.category.icon} color={env.category.color} size={36} />
-                <div className="mini-env-main">
-                  <div className="mini-env-top">
-                    <span>{env.category.name}</span>
-                    <span className="num">{formatMoneyCompact(env.spent)} / {formatMoneyCompact(env.budget.amount)}</span>
-                  </div>
-                  <ProgressBar ratio={env.ratio} semantic />
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Répartition */}
-      {summary.breakdown.length > 0 && (
-        <section className="rise" style={{ animationDelay: '220ms' }}>
-          <div className="row-head">
-            <h2 className="block-title">Répartition des dépenses</h2>
-          </div>
-          <div className="card card-pad">
-            <DonutChart slices={summary.breakdown} total={summary.spending} />
-            <ul className="legend">
-              {summary.breakdown.map((s) => (
-                <li key={s.category.id}>
-                  <span className="legend-dot" style={{ background: s.category.color }} />
-                  <span className="legend-name">{s.category.name}</span>
-                  <span className="legend-val num">{formatMoneyCompact(s.amount)}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-      )}
-
-      {/* Évolution */}
-      <section className="rise" style={{ animationDelay: '250ms' }}>
-        <div className="row-head">
-          <h2 className="block-title">Évolution mensuelle</h2>
-        </div>
-        <div className="card card-pad">
-          <MonthlyBars points={summary.evolution} />
-        </div>
-      </section>
+      {/* Analyses (deck swipable) */}
+      <div className="row-head rise" style={{ animationDelay: '180ms' }}>
+        <h2 className="block-title">Mes analyses</h2>
+        {deckPanels.length > 1 && <span className="section-label">glisse →</span>}
+      </div>
+      <SwipeDeck panels={deckPanels} animationDelay="190ms" showTabs={false} />
 
       {/* Abonnements */}
       <section className="rise" style={{ animationDelay: '280ms' }}>
