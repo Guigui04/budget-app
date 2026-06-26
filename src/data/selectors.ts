@@ -10,6 +10,7 @@ import type {
   HoldingKind,
   NetWorthSnapshot,
   Quote,
+  SavingsRule,
   Subscription,
   Transaction,
 } from '@/types'
@@ -907,4 +908,94 @@ export function projectInvestment(input: InvestmentProjectionInput): InvestmentP
     totalGain,
     gainPct: totalInvested > 0 ? totalGain / totalInvested : 0,
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Épargne automatique — moteur de règles (comptabilité, pas de virement)
+// L'app ne peut pas déclencher de transfert (PISP hors périmètre). On calcule,
+// 100 % déterministe sur les données du mois courant, combien CHAQUE règle met
+// de côté — une projection/tracker, pas un mouvement d'argent réel.
+// ─────────────────────────────────────────────────────────────────────────
+
+export interface SavingsRuleResult {
+  rule: SavingsRule
+  /** Montant mis de côté ce mois-ci selon la règle. */
+  amountThisMonth: number
+  /** Nombre d'opérations concernées (arrondis, déclencheur catégorie). */
+  count: number
+  /** Base de calcul (revenus du mois, surplus projeté…) pour l'explication. */
+  basis: number
+}
+
+export interface SavingsPlan {
+  results: SavingsRuleResult[]
+  /** Total mis de côté ce mois-ci (règles actives uniquement). */
+  totalThisMonth: number
+}
+
+function roundupResult(txns: Transaction[], roundTo: number, multiplier: number, ref: Date): { amount: number; count: number } {
+  const step = roundTo > 0 ? roundTo : 1
+  let amount = 0
+  let count = 0
+  for (const t of txns) {
+    if (t.amount >= 0 || !isInMonth(t.bookingDate, ref)) continue
+    if (isTransferLabel(t.cleanLabel || t.rawLabel)) continue // pas un achat
+    const abs = Math.abs(t.amount)
+    const roundedUp = Math.ceil(abs / step) * step
+    const diff = roundedUp - abs
+    if (diff > 0) {
+      amount += diff
+      count++
+    }
+  }
+  return { amount: amount * (multiplier > 0 ? multiplier : 1), count }
+}
+
+/** Calcule, par règle, le montant mis de côté sur le mois courant. */
+export function computeSavingsPlan(
+  rules: SavingsRule[],
+  transactions: Transaction[],
+  accounts: Account[],
+  ref = new Date(),
+): SavingsPlan {
+  const results: SavingsRuleResult[] = rules.map((rule) => {
+    let amountThisMonth = 0
+    let count = 0
+    let basis = 0
+    switch (rule.type) {
+      case 'roundup': {
+        const r = roundupResult(transactions, rule.roundTo ?? 1, rule.multiplier ?? 1, ref)
+        amountThisMonth = r.amount
+        count = r.count
+        break
+      }
+      case 'income_pct': {
+        basis = monthIncome(transactions, ref)
+        amountThisMonth = (basis * (rule.percent ?? 0)) / 100
+        break
+      }
+      case 'surplus_sweep': {
+        const f = monthForecast(accounts, transactions, ref)
+        basis = f.delta
+        amountThisMonth = Math.max(0, f.delta)
+        break
+      }
+      case 'category_trigger': {
+        const per = rule.amount ?? 0
+        for (const t of transactions) {
+          if (t.amount >= 0 || !isInMonth(t.bookingDate, ref)) continue
+          if (rule.categoryId && t.categoryId === rule.categoryId) count++
+        }
+        amountThisMonth = count * per
+        break
+      }
+    }
+    return { rule, amountThisMonth: Math.round(amountThisMonth * 100) / 100, count, basis }
+  })
+
+  const totalThisMonth = results
+    .filter((r) => r.rule.enabled)
+    .reduce((s, r) => s + r.amountThisMonth, 0)
+
+  return { results, totalThisMonth: Math.round(totalThisMonth * 100) / 100 }
 }

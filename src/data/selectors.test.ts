@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import type { Budget, Category, Goal, Holding, NetWorthSnapshot, Quote, Subscription, Transaction } from '@/types'
+import type { Budget, Category, Goal, Holding, NetWorthSnapshot, Quote, SavingsRule, Subscription, Transaction } from '@/types'
 import type { Account } from '@/types'
 import {
   activeSubscriptionsMonthlyCost,
   buildEnvelopes,
   buildNetWorthSeries,
   categoryBreakdown,
+  computeSavingsPlan,
   estimateMonthlyPace,
   goalProgress,
   goalProjection,
@@ -468,5 +469,69 @@ describe('projectInvestment', () => {
     const r = projectInvestment({ initial: 500, monthly: 100, years: 0, annualRate: 0.06 })
     expect(r.finalValue).toBe(500)
     expect(r.points).toHaveLength(1)
+  })
+})
+
+describe('computeSavingsPlan', () => {
+  const REF_S = new Date('2026-06-15T12:00:00Z')
+  function rule(partial: Partial<SavingsRule>): SavingsRule {
+    return {
+      id: 'r', householdId: 'h', type: 'roundup', enabled: true,
+      roundTo: 1, multiplier: 1, percent: null, categoryId: null, amount: null,
+      targetGoalId: null, createdAt: '2026-06-01', ...partial,
+    }
+  }
+
+  it('arrondit les achats du mois à l’euro supérieur', () => {
+    const txns = [
+      txn({ id: '1', amount: -10.4, bookingDate: '2026-06-10' }), // +0.60
+      txn({ id: '2', amount: -5.25, bookingDate: '2026-06-12' }), // +0.75
+      txn({ id: '3', amount: -8, bookingDate: '2026-06-12' }), // entier → 0
+      txn({ id: '4', amount: -3.1, bookingDate: '2026-05-10' }), // hors mois
+      txn({ id: '5', amount: 2000, bookingDate: '2026-06-01' }), // revenu ignoré
+    ]
+    const plan = computeSavingsPlan([rule({})], txns, [], REF_S)
+    expect(plan.results[0].count).toBe(2)
+    expect(plan.results[0].amountThisMonth).toBeCloseTo(1.35)
+    expect(plan.totalThisMonth).toBeCloseTo(1.35)
+  })
+
+  it('applique un multiplicateur d’arrondi', () => {
+    const txns = [txn({ id: '1', amount: -10.5, bookingDate: '2026-06-10' })] // 0.50 ×3
+    const plan = computeSavingsPlan([rule({ multiplier: 3 })], txns, [], REF_S)
+    expect(plan.results[0].amountThisMonth).toBeCloseTo(1.5)
+  })
+
+  it('calcule un pourcentage des revenus du mois', () => {
+    const txns = [
+      txn({ id: '1', amount: 2000, bookingDate: '2026-06-01' }),
+      txn({ id: '2', amount: 500, bookingDate: '2026-06-03' }),
+      txn({ id: '3', amount: -50, bookingDate: '2026-06-04' }),
+    ]
+    const plan = computeSavingsPlan([rule({ type: 'income_pct', percent: 10 })], txns, [], REF_S)
+    expect(plan.results[0].basis).toBe(2500)
+    expect(plan.results[0].amountThisMonth).toBeCloseTo(250)
+  })
+
+  it('déclenche un montant fixe par opération d’une catégorie', () => {
+    const txns = [
+      txn({ id: '1', amount: -22, categoryId: 'cat-resto', bookingDate: '2026-06-10' }),
+      txn({ id: '2', amount: -18, categoryId: 'cat-resto', bookingDate: '2026-06-11' }),
+      txn({ id: '3', amount: -30, categoryId: 'cat-courses', bookingDate: '2026-06-12' }),
+    ]
+    const plan = computeSavingsPlan([rule({ type: 'category_trigger', categoryId: 'cat-resto', amount: 3 })], txns, [], REF_S)
+    expect(plan.results[0].count).toBe(2)
+    expect(plan.results[0].amountThisMonth).toBeCloseTo(6)
+  })
+
+  it('exclut les règles désactivées du total', () => {
+    const txns = [txn({ id: '1', amount: -10.5, bookingDate: '2026-06-10' })]
+    const plan = computeSavingsPlan(
+      [rule({ id: 'on', enabled: true }), rule({ id: 'off', enabled: false })],
+      txns, [], REF_S,
+    )
+    expect(plan.results).toHaveLength(2)
+    // Seule la règle active compte dans le total (0.50 chacune).
+    expect(plan.totalThisMonth).toBeCloseTo(0.5)
   })
 })

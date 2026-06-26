@@ -13,6 +13,7 @@ import type {
   GoalContribution,
   Holding,
   Household,
+  SavingsRule,
   NetWorthSnapshot,
   Quote,
   Subscription,
@@ -124,6 +125,16 @@ export const demoGoalContributions: GoalContribution[] = [
   { id: 'gc-c1', householdId: HOUSEHOLD_ID, goalId: 'goal-canape', amount: 180, contributedAt: dateDaysAgo(70), authorUserId: 'u-maeva', authorName: 'Maëva' },
   { id: 'gc-c2', householdId: HOUSEHOLD_ID, goalId: 'goal-canape', amount: 180, contributedAt: dateDaysAgo(38), authorUserId: 'u-maeva', authorName: 'Maëva' },
   { id: 'gc-c3', householdId: HOUSEHOLD_ID, goalId: 'goal-canape', amount: 180, contributedAt: dateDaysAgo(7), authorUserId: 'u-guillaume', authorName: 'Guillaume' },
+]
+
+/**
+ * Règles d'épargne automatique de démo. Calculées sur les transactions du mois
+ * (comptabilité, pas de virement). Couvre 3 des 4 types pour montrer la vue.
+ */
+export const demoSavingsRules: SavingsRule[] = [
+  { id: 'sr-roundup', householdId: HOUSEHOLD_ID, type: 'roundup', enabled: true, roundTo: 1, multiplier: 1, percent: null, categoryId: null, amount: null, targetGoalId: 'goal-vacances', createdAt: isoDaysAgo(120) },
+  { id: 'sr-income', householdId: HOUSEHOLD_ID, type: 'income_pct', enabled: true, roundTo: null, multiplier: null, percent: 5, categoryId: null, amount: null, targetGoalId: 'goal-secours', createdAt: isoDaysAgo(120) },
+  { id: 'sr-resto', householdId: HOUSEHOLD_ID, type: 'category_trigger', enabled: false, roundTo: null, multiplier: null, percent: null, categoryId: 'cat-resto', amount: 3, targetGoalId: 'goal-canape', createdAt: isoDaysAgo(90) },
 ]
 
 // ── Patrimoine / investissement ─────────────────────────────

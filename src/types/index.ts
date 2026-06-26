@@ -184,6 +184,33 @@ export interface SymbolSearchResult {
   exchange: string
 }
 
+/**
+ * Type de règle d'épargne automatique. L'app ne peut pas initier de virement
+ * (PISP hors périmètre) : ces règles produisent une **comptabilité** de l'argent
+ * à mettre de côté, calculée sur les données déjà présentes — pas un transfert.
+ */
+export type SavingsRuleType = 'roundup' | 'surplus_sweep' | 'income_pct' | 'category_trigger'
+
+export interface SavingsRule {
+  id: UUID
+  householdId: UUID
+  type: SavingsRuleType
+  enabled: boolean
+  /** roundup : arrondi à l'euro/2/5… supérieur (défaut 1). */
+  roundTo: number | null
+  /** roundup : multiplicateur de l'arrondi mis de côté (×1, ×2…). */
+  multiplier: number | null
+  /** income_pct : pourcentage des revenus (ex. 10). */
+  percent: number | null
+  /** category_trigger : catégorie déclencheuse. */
+  categoryId: UUID | null
+  /** category_trigger : montant fixe mis de côté par opération. */
+  amount: number | null
+  /** Objectif alimenté par la règle (informatif) ; null = réserve générique. */
+  targetGoalId: UUID | null
+  createdAt: string
+}
+
 export type SubscriptionFrequency = 'monthly' | 'yearly' | 'weekly'
 
 export interface Subscription {

@@ -5,12 +5,15 @@ import {
   Home,
   Landmark,
   LineChart,
+  Percent,
   PiggyBank,
+  RefreshCw,
   TrendingUp,
   Wallet,
+  Zap,
   type LucideIcon,
 } from 'lucide-react'
-import type { HoldingEnvelope, HoldingKind } from '@/types'
+import type { HoldingEnvelope, HoldingKind, SavingsRuleType } from '@/types'
 
 export interface KindMeta {
   label: string
@@ -42,3 +45,20 @@ export const ENVELOPE_META: Record<HoldingEnvelope, string> = {
 
 export const KIND_ORDER: HoldingKind[] = ['etf', 'stock', 'crypto', 'fund', 'livret', 'real_estate', 'cash', 'other']
 export const ENVELOPE_ORDER: HoldingEnvelope[] = ['PEA', 'AV', 'CTO', 'crypto', 'livret', 'autre']
+
+export interface SavingsRuleMeta {
+  label: string
+  /** Promesse en une phrase, affichée sur les modèles. */
+  desc: string
+  icon: LucideIcon
+  color: string
+}
+
+export const SAVINGS_RULE_META: Record<SavingsRuleType, SavingsRuleMeta> = {
+  roundup: { label: 'Arrondir mes achats', desc: 'Chaque paiement arrondi à l’euro supérieur, mis de côté.', icon: RefreshCw, color: '#7c5cff' },
+  surplus_sweep: { label: 'Balayer le surplus', desc: 'Le surplus prévu en fin de mois part vers un objectif.', icon: Zap, color: '#46c79a' },
+  income_pct: { label: '% de mes revenus', desc: 'Une part de chaque rentrée automatiquement épargnée.', icon: Percent, color: '#f0784a' },
+  category_trigger: { label: 'Déclencheur par catégorie', desc: 'Ex. chaque resto → un montant fixe de côté.', icon: Landmark, color: '#6fa8dc' },
+}
+
+export const SAVINGS_RULE_ORDER: SavingsRuleType[] = ['roundup', 'surplus_sweep', 'income_pct', 'category_trigger']
