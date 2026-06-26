@@ -18,6 +18,7 @@ import { TransactionRow } from '@/components/TransactionRow'
 import { BalanceStack } from './BalanceStack'
 import { BalanceActions } from './BalanceActions'
 import { ForecastCard } from './ForecastCard'
+import { HealthScoreCard } from '@/features/health/HealthScoreCard'
 import { WrappedTeaser } from '@/features/wrapped/WrappedTeaser'
 import { formatMoneyCompact, isStale } from '@/lib/format'
 import { haptic } from '@/lib/haptics'
@@ -66,6 +67,8 @@ export function DashboardPage() {
       />
 
       <BalanceActions />
+
+      <HealthScoreCard />
 
       <ForecastCard accounts={accounts} transactions={transactions} categories={categories} />
 

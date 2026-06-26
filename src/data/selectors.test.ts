@@ -8,6 +8,7 @@ import {
   categoryBreakdown,
   computeSavingsPlan,
   estimateMonthlyPace,
+  financialHealth,
   goalProgress,
   goalProjection,
   monthForecast,
@@ -533,5 +534,55 @@ describe('computeSavingsPlan', () => {
     expect(plan.results).toHaveLength(2)
     // Seule la règle active compte dans le total (0.50 chacune).
     expect(plan.totalThisMonth).toBeCloseTo(0.5)
+  })
+})
+
+describe('financialHealth', () => {
+  const REF_H = new Date('2026-06-15T12:00:00Z')
+  const accH = (id: string, balance: number): Account => ({
+    id, bankConnectionId: 'bc', householdId: 'h', externalAccountId: id, name: id,
+    iban: 'FR', currency: 'EUR', balance, balanceUpdatedAt: '2026-06-10', kind: 'checking',
+  })
+  const cat = (id: string): Category => ({ id, householdId: 'h', name: id, icon: 'c', color: '#000', parentId: null, isDefault: true })
+  const bud = (categoryId: string, amount: number): Budget => ({ id: `b-${categoryId}`, householdId: 'h', categoryId, amount, period: 'monthly', createdAt: '2026-01-01' })
+  const subH = (amount: number): Subscription => ({ id: `s${amount}`, householdId: 'h', merchantLabel: 'x', amount, frequency: 'monthly', nextExpectedDate: '2026-06-20', categoryId: null, isConfirmed: true, isActive: true })
+
+  it('note un foyer sain proche de l’excellence', () => {
+    const txns = [
+      txn({ id: 'i', amount: 3000, bookingDate: '2026-05-05', categoryId: 'cat-salaire' }),
+      txn({ id: 'e', amount: -2000, bookingDate: '2026-05-10' }),
+      txn({ id: 'jun', amount: -300, bookingDate: '2026-06-10', categoryId: 'cat-food' }), // pour le budget (mois courant)
+    ]
+    const h = financialHealth([accH('a', 12000)], txns, [bud('cat-food', 500)], [cat('cat-food')], [subH(100)], 0, REF_H)
+    expect(h.evaluatedCount).toBe(4)
+    expect(h.score).toBe(96)
+    expect(h.grade).toBe('excellent')
+  })
+
+  it('note fragile un foyer en difficulté', () => {
+    const txns = [
+      txn({ id: 'i', amount: 2000, bookingDate: '2026-05-05', categoryId: 'cat-salaire' }),
+      txn({ id: 'e', amount: -2100, bookingDate: '2026-05-10' }),
+    ]
+    const h = financialHealth([accH('a', 500)], txns, [], [], [subH(300)], 0, REF_H)
+    expect(h.evaluatedCount).toBe(3) // pas de budget
+    expect(h.score).toBeLessThan(15)
+    expect(h.grade).toBe('fragile')
+  })
+
+  it('redistribue les poids quand des dimensions manquent', () => {
+    const txns = [txn({ id: 'e', amount: -1500, bookingDate: '2026-05-10' })] // dépenses, pas de revenu txn
+    // Revenu déclaré du foyer = 3000 → taux d'épargne évaluable ; pas de budget ni d'abonnement.
+    const h = financialHealth([accH('a', 9000)], txns, [], [], [], 3000, REF_H)
+    expect(h.evaluatedCount).toBe(2) // épargne + fonds d'urgence
+    expect(h.score).toBe(100) // taux 50 % et 6 mois de fonds
+    expect(h.grade).toBe('excellent')
+  })
+
+  it('retourne null sans aucune donnée évaluable', () => {
+    const h = financialHealth([], [], [], [], [], 0, REF_H)
+    expect(h.score).toBeNull()
+    expect(h.grade).toBeNull()
+    expect(h.evaluatedCount).toBe(0)
   })
 })
