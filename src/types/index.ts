@@ -97,6 +97,23 @@ export interface Goal {
   color: string
 }
 
+/**
+ * Un versement daté vers un objectif. Historise les apports manuels pour
+ * estimer le rythme d'épargne (ETA) et afficher la chronologie. L'auteur est
+ * conservé pour le suivi en foyer partagé.
+ */
+export interface GoalContribution {
+  id: UUID
+  householdId: UUID
+  goalId: UUID
+  amount: number
+  /** Date du versement (YYYY-MM-DD). */
+  contributedAt: string
+  /** Membre du foyer à l'origine du versement (null si inconnu / agrégé). */
+  authorUserId: UUID | null
+  authorName: string | null
+}
+
 /** Classe d'actif d'une position de patrimoine. */
 export type HoldingKind =
   | 'etf'

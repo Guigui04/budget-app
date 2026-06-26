@@ -3222,3 +3222,363 @@
   font-size: 0.82rem;
   font-weight: 700;
 }
+
+/* ════════════════════════════════════════════════════════════
+   Objectifs nouvelle génération (It.2)
+   ════════════════════════════════════════════════════════════ */
+
+/* Bannière d'allocation du surplus */
+.surplus-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  margin-bottom: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  background: linear-gradient(120deg, var(--accent-soft), var(--positive-soft));
+  text-align: left;
+}
+
+.surplus-banner-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: var(--r-sm);
+  background: var(--surface-solid);
+  color: var(--accent-text);
+}
+
+.surplus-banner-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.surplus-banner-title {
+  display: block;
+  font-weight: 900;
+}
+
+.surplus-banner-sub {
+  display: block;
+  margin-top: 1px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.surplus-banner-chevron {
+  flex-shrink: 0;
+  color: var(--text-faint);
+}
+
+/* Bandeau de progression vers la date cible (carte) */
+.goal-card-track {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: var(--r-full);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+.goal-card-track.ok { background: var(--positive-soft); color: var(--positive); }
+.goal-card-track.late { background: var(--amber-soft); color: var(--amber); }
+
+/* Jalons dans la fiche */
+.goal-milestones {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--sp-4);
+}
+
+.goal-milestone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.goal-milestone-dot {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-full);
+  border: 2px solid var(--surface-sunk);
+  background: var(--surface-2);
+  color: var(--on-accent);
+}
+
+.goal-milestone-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--text-faint);
+}
+.goal-milestone.reached .goal-milestone-label { color: var(--text-muted); }
+
+/* Projection / ETA */
+.goal-eta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--sp-4);
+  font-weight: 900;
+}
+.goal-eta.reached { color: var(--positive); justify-content: center; }
+
+.goal-eta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+}
+
+.goal-eta-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+}
+
+.goal-eta-icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: var(--r-xs);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.goal-eta-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.goal-eta-val {
+  display: block;
+  font-weight: 900;
+  font-size: 0.92rem;
+}
+
+.goal-track {
+  margin-top: var(--sp-3);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+.goal-track.ok { color: var(--positive); }
+.goal-track.late { color: var(--amber); }
+
+/* Chronologie des versements */
+.goal-history {
+  margin-top: var(--sp-5);
+}
+
+.goal-history-head {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: var(--sp-2);
+}
+
+.goal-history-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 9px 0;
+  border-top: 1px solid var(--surface-sunk);
+}
+
+.goal-history-author {
+  font-weight: 800;
+  font-size: 0.86rem;
+}
+
+.goal-history-date {
+  color: var(--text-faint);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.goal-history-amt {
+  margin-left: auto;
+  color: var(--positive);
+  font-weight: 900;
+}
+
+/* Sheet d'allocation */
+.alloc-intro {
+  margin-bottom: var(--sp-4);
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.alloc-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.alloc-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  text-align: left;
+}
+
+.alloc-row-main { flex: 1; min-width: 0; }
+.alloc-row-name { display: block; font-weight: 900; }
+.alloc-row-sub { display: block; margin-top: 1px; color: var(--text-muted); font-size: 0.78rem; font-weight: 700; }
+
+/* ════════════════════════════════════════════════════════════
+   Simulateur d'intérêts composés (It.2)
+   ════════════════════════════════════════════════════════════ */
+
+.sim-teaser-chevron { flex-shrink: 0; color: var(--text-faint); }
+
+.sim-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: var(--sp-3);
+  text-align: center;
+}
+
+.sim-result-value {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.sim-result-split {
+  display: flex;
+  gap: var(--sp-4);
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.sim-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 4px;
+  border-radius: 3px;
+  vertical-align: middle;
+}
+.sim-dot.versed { background: var(--text-faint); }
+
+.sim-field { margin-top: var(--sp-4); }
+
+.sim-field-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--sp-2);
+}
+
+.sim-field-label {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--text-muted);
+}
+
+.sim-field-value { font-weight: 900; }
+
+/* Range slider — piste remplie via --pct */
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: var(--r-full);
+  background: linear-gradient(to right, var(--accent) var(--pct, 50%), var(--surface-sunk) var(--pct, 50%));
+  outline: none;
+}
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-full);
+  background: var(--surface-solid);
+  border: 3px solid var(--accent);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+}
+.slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-full);
+  background: var(--surface-solid);
+  border: 3px solid var(--accent);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+}
+
+.sim-profiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-2);
+}
+
+.sim-profile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-3) var(--sp-2);
+  border: 1.5px solid var(--surface-sunk);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  text-align: center;
+}
+
+.sim-profile-name { font-weight: 900; font-size: 0.86rem; }
+.sim-profile-rate { font-weight: 800; font-size: 0.78rem; color: var(--text-muted); }
+.sim-profile-blurb { font-size: 0.68rem; font-weight: 700; color: var(--text-faint); line-height: 1.25; }
+
+.sim-disclaimer {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: var(--sp-5);
+  color: var(--text-faint);
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.sim-disclaimer svg { flex-shrink: 0; margin-top: 2px; }
+
+/* ════════════════════════════════════════════════════════════
+   Confettis (célébration de jalon / objectif atteint)
+   ════════════════════════════════════════════════════════════ */
+.confetti-layer {
+  position: fixed;
+  top: 38%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  z-index: 1200;
+  pointer-events: none;
+}
+
+.confetti-piece {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 2px;
+  will-change: transform, opacity;
+}

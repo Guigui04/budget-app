@@ -517,6 +517,151 @@ export function goalProgress(goal: Goal): GoalProgress {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+// Objectifs nouvelle génération — projection, ETA, jalons
+// Tout est déterministe : à partir du rythme mensuel (estimé sur l'historique
+// des versements, ou déduit de l'échéance), on projette une date d'atteinte et
+// une courbe de progression. Aucune recommandation, uniquement de l'information.
+// ─────────────────────────────────────────────────────────────────────────
+
+const MONTH_MS = 30 * 24 * 60 * 60 * 1000
+
+/**
+ * Estime le rythme d'épargne mensuel à partir des versements récents.
+ * On somme les apports des `windowMonths` derniers mois et on divise par le
+ * nombre de mois couverts — robuste à un mois sans versement.
+ */
+export function estimateMonthlyPace(
+  contributions: { amount: number; contributedAt: string }[],
+  windowMonths = 6,
+  ref = new Date(),
+): number {
+  if (contributions.length === 0) return 0
+  const cutoff = ref.getTime() - windowMonths * MONTH_MS
+  const recent = contributions.filter((c) => new Date(c.contributedAt).getTime() >= cutoff)
+  if (recent.length === 0) return 0
+  const total = recent.reduce((s, c) => s + c.amount, 0)
+  // Mois écoulés entre le plus ancien versement retenu et maintenant (≥ 1).
+  const oldest = Math.min(...recent.map((c) => new Date(c.contributedAt).getTime()))
+  const spanMonths = Math.max(1, Math.round((ref.getTime() - oldest) / MONTH_MS))
+  return total / spanMonths
+}
+
+export interface GoalMilestone {
+  /** Palier (0.25, 0.5, 0.75, 1). */
+  ratio: number
+  amount: number
+  reached: boolean
+}
+
+export interface GoalProjectionPoint {
+  /** Premier jour du mois (ISO). */
+  monthIso: string
+  /** Valeur cumulée projetée à ce mois. */
+  value: number
+  /** Point de départ (mois courant, valeur réelle). */
+  isStart: boolean
+}
+
+export type PaceSource = 'history' | 'needed' | 'none'
+
+export interface GoalProjection {
+  goal: Goal
+  ratio: number
+  remaining: number
+  reached: boolean
+  /** Rythme mensuel retenu pour la projection. */
+  monthlyPace: number
+  /** Provenance du rythme : historique, déduit de l'échéance, ou indéterminé. */
+  paceSource: PaceSource
+  /** Versement mensuel nécessaire pour tenir l'échéance (si date cible). */
+  monthlyNeeded: number | null
+  /** Date d'atteinte projetée au rythme courant (ISO) ; null si rythme nul. */
+  etaIso: string | null
+  /** Nombre de mois jusqu'à l'atteinte ; null si rythme nul. */
+  etaMonths: number | null
+  /** Au rythme actuel, l'échéance sera-t-elle tenue ? null sans date cible. */
+  onTrack: boolean | null
+  milestones: GoalMilestone[]
+  /** Courbe de progression projetée (mensuelle). */
+  points: GoalProjectionPoint[]
+}
+
+const MILESTONE_RATIOS = [0.25, 0.5, 0.75, 1] as const
+const MAX_PROJECTION_MONTHS = 600 // garde-fou (50 ans) pour un rythme infime
+
+/**
+ * Projette l'atteinte d'un objectif au rythme d'épargne fourni.
+ * `monthlyPace` provient en général de `estimateMonthlyPace` ; à défaut, on
+ * retombe sur le versement nécessaire pour tenir l'échéance.
+ */
+export function goalProjection(goal: Goal, monthlyPace: number, ref = new Date()): GoalProjection {
+  const progress = goalProgress(goal)
+  const { ratio, remaining, monthlyNeeded } = progress
+  const reached = remaining <= 0
+
+  let pace = monthlyPace
+  let paceSource: PaceSource = monthlyPace > 0 ? 'history' : 'none'
+  if (pace <= 0 && monthlyNeeded != null) {
+    pace = monthlyNeeded
+    paceSource = 'needed'
+  }
+
+  const milestones: GoalMilestone[] = MILESTONE_RATIOS.map((r) => ({
+    ratio: r,
+    amount: goal.targetAmount * r,
+    reached: goal.currentAmount >= goal.targetAmount * r,
+  }))
+
+  // Point de départ = mois courant à la valeur actuelle.
+  const startMonth = startOfMonth(ref)
+  const points: GoalProjectionPoint[] = [
+    { monthIso: startMonth.toISOString(), value: Math.min(goal.currentAmount, goal.targetAmount), isStart: true },
+  ]
+
+  let etaMonths: number | null = null
+  let etaIso: string | null = null
+  if (reached) {
+    etaMonths = 0
+    etaIso = startMonth.toISOString()
+  } else if (pace > 0) {
+    const months = Math.min(Math.ceil(remaining / pace), MAX_PROJECTION_MONTHS)
+    etaMonths = months
+    let value = goal.currentAmount
+    for (let m = 1; m <= months; m++) {
+      value = Math.min(value + pace, goal.targetAmount)
+      points.push({
+        monthIso: monthOffset(startMonth, m).toISOString(),
+        value,
+        isStart: false,
+      })
+    }
+    etaIso = monthOffset(startMonth, months).toISOString()
+  }
+
+  let onTrack: boolean | null = null
+  if (goal.targetDate && !reached) {
+    onTrack = etaIso != null && new Date(etaIso).getTime() <= new Date(goal.targetDate).getTime()
+  } else if (goal.targetDate && reached) {
+    onTrack = true
+  }
+
+  return {
+    goal,
+    ratio,
+    remaining,
+    reached,
+    monthlyPace: pace,
+    paceSource,
+    monthlyNeeded,
+    etaIso,
+    etaMonths,
+    onTrack,
+    milestones,
+    points,
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // Patrimoine & investissement
 // Valorisation 100 % déterministe : un actif coté vaut quantité × cours réel,
 // un actif lié à un compte vaut le solde du compte, sinon sa valeur manuelle.
@@ -674,4 +819,92 @@ export function netWorth(accounts: Account[], holdings: Holding[], quotes: Map<s
     .filter((h) => h.linkedAccountId === null)
     .reduce((s, h) => s + valuateHolding(h, quotes, accounts).value, 0)
   return { total: cash + invested, cash, invested }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Simulateur d'intérêts composés (pédagogique)
+// Intérêts composés mensuels : capital initial + versement régulier, capitalisés
+// à un taux annuel converti en taux mensuel. Aucune préconisation personnalisée
+// (cf. contraintes réglementaires) : on illustre une mécanique, on ne conseille pas.
+// ─────────────────────────────────────────────────────────────────────────
+
+export type RiskProfileKey = 'prudent' | 'balanced' | 'dynamic'
+
+export interface RiskProfile {
+  key: RiskProfileKey
+  label: string
+  /** Taux annuel moyen illustratif (rendement long terme indicatif). */
+  annualRate: number
+  /** Exemple d'allocation, à titre pédagogique. */
+  blurb: string
+  color: string
+}
+
+/** Profils illustratifs — moyennes longues indicatives, jamais une promesse. */
+export const RISK_PROFILES: RiskProfile[] = [
+  { key: 'prudent', label: 'Prudent', annualRate: 0.03, blurb: 'Fonds €, obligations', color: '#18ac6b' },
+  { key: 'balanced', label: 'Équilibré', annualRate: 0.06, blurb: 'ETF World diversifié', color: '#7c5cff' },
+  { key: 'dynamic', label: 'Dynamique', annualRate: 0.09, blurb: 'Actions, forte volatilité', color: '#f0784a' },
+]
+
+export interface InvestmentProjectionInput {
+  /** Capital de départ (€). */
+  initial: number
+  /** Versement mensuel (€). */
+  monthly: number
+  /** Durée en années. */
+  years: number
+  /** Taux annuel (ex. 0.06 pour 6 %). */
+  annualRate: number
+}
+
+export interface InvestmentProjectionPoint {
+  year: number
+  /** Capital versé cumulé (sans rendement). */
+  invested: number
+  /** Valeur avec intérêts composés. */
+  value: number
+}
+
+export interface InvestmentProjection {
+  points: InvestmentProjectionPoint[]
+  /** Valeur finale projetée. */
+  finalValue: number
+  /** Total des versements (initial + mensuels). */
+  totalInvested: number
+  /** finalValue − totalInvested (effet des intérêts composés). */
+  totalGain: number
+  gainPct: number
+}
+
+/**
+ * Projection d'un placement à intérêts composés, capitalisation mensuelle.
+ * value_{m+1} = value_m × (1 + taux_mensuel) + versement. Un point par année
+ * (plus l'année 0) pour un rendu lisible.
+ */
+export function projectInvestment(input: InvestmentProjectionInput): InvestmentProjection {
+  const months = Math.max(0, Math.round(input.years * 12))
+  const monthlyRate = input.annualRate / 12
+  let value = input.initial
+  let invested = input.initial
+  const points: InvestmentProjectionPoint[] = [{ year: 0, invested, value }]
+
+  for (let m = 1; m <= months; m++) {
+    value = value * (1 + monthlyRate) + input.monthly
+    invested += input.monthly
+    if (m % 12 === 0 || m === months) {
+      points.push({ year: Math.round((m / 12) * 100) / 100, invested, value })
+    }
+  }
+
+  const finalValue = value
+  const totalInvested = invested
+  const totalGain = finalValue - totalInvested
+  return {
+    points,
+    finalValue,
+    totalInvested,
+    totalGain,
+    gainPct: totalInvested > 0 ? totalGain / totalInvested : 0,
+  }
 }

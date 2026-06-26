@@ -26,6 +26,7 @@ import {
   mapCategory,
   mapConnection,
   mapGoal,
+  mapGoalContribution,
   mapHolding,
   mapNetWorthSnapshot,
   mapSubscription,
@@ -39,6 +40,7 @@ import type {
   Budget,
   Category,
   Goal,
+  GoalContribution,
   Holding,
   NetWorthSnapshot,
   Quote,
@@ -70,6 +72,7 @@ export const keys = {
   categories: ['categories'] as const,
   budgets: ['budgets'] as const,
   goals: ['goals'] as const,
+  goalContributions: ['goal_contributions'] as const,
   subscriptions: ['subscriptions'] as const,
   alerts: ['alerts'] as const,
   connections: ['connections'] as const,
@@ -122,6 +125,15 @@ export function useGoals() {
   return useQuery({
     queryKey: keys.goals,
     queryFn: async (): Promise<Goal[]> => (live ? select('goals', mapGoal) : demoStore.snapshot().goals),
+  })
+}
+
+/** Versements d'un objectif (chronologie + estimation du rythme). */
+export function useGoalContributions() {
+  return useQuery({
+    queryKey: keys.goalContributions,
+    queryFn: async (): Promise<GoalContribution[]> =>
+      live ? select('goal_contributions', mapGoalContribution, 'contributed_at') : demoStore.snapshot().goalContributions,
   })
 }
 
@@ -303,13 +315,25 @@ export function useAddGoalContribution() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ goalId, amount, currentAmount }: { goalId: string; amount: number; currentAmount: number }) => {
+      const author = useSession.getState().user
       if (live) {
         await supabase!.from('goals').update({ current_amount: currentAmount + amount }).eq('id', goalId)
+        const { error } = await supabase!.from('goal_contributions').insert({
+          household_id: requireHouseholdId(),
+          goal_id: goalId,
+          amount,
+          author_user_id: author?.id ?? null,
+          author_name: author?.displayName ?? null,
+        })
+        if (error) throw new Error(error.message)
       } else {
-        demoStore.addGoalContribution(goalId, amount)
+        demoStore.addGoalContribution(goalId, amount, author ? { id: author.id, name: author.displayName } : null)
       }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: keys.goals }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.goals })
+      qc.invalidateQueries({ queryKey: keys.goalContributions })
+    },
   })
 }
 
