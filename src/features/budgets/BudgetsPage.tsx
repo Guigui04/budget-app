@@ -1,14 +1,16 @@
 import { useMemo, useState } from 'react'
-import { Plus, Wallet } from 'lucide-react'
+import { Plus, Wallet, Sparkles, ChevronRight } from 'lucide-react'
 import { useBudgets, useCategories, useTransactions } from '@/data/hooks'
-import { buildEnvelopes, monthSpending } from '@/data/selectors'
+import { buildEnvelopes, monthSpending, suggestBudgets } from '@/data/selectors'
 import { useSession } from '@/store/session'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { BudgetSheet } from './BudgetSheet'
+import { AutoBudgetSheet } from './AutoBudgetSheet'
 import { formatMoney, formatMoneyCompact, formatMonth, formatPercent } from '@/lib/format'
+import { haptic } from '@/lib/haptics'
 import type { BudgetEnvelope } from '@/types'
 
 export function BudgetsPage() {
@@ -18,6 +20,7 @@ export function BudgetsPage() {
   const household = useSession((s) => s.household)
   const updateIncome = useSession((s) => s.updateHouseholdIncome)
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [autoOpen, setAutoOpen] = useState(false)
   const [editing, setEditing] = useState<BudgetEnvelope | null>(null)
 
   const income = household?.monthlyIncome ?? 0
@@ -42,6 +45,14 @@ export function BudgetsPage() {
   const available = categories.filter(
     (c) => !budgets.some((b) => b.categoryId === c.id) && c.name !== 'Salaire' && c.name !== 'Épargne',
   )
+
+  // Suggestions actionnables : enveloppe absente, ou budget actuel éloigné (≥ 20 %)
+  // de la dépense réelle. On ne propose pas ce qui est déjà bien calé.
+  const suggestions = useMemo(() => {
+    return suggestBudgets(transactions, categories, budgets).filter(
+      (s) => s.current === null || Math.abs(s.suggested - s.current) / s.current >= 0.2,
+    )
+  }, [transactions, categories, budgets])
 
   function openNew() {
     setEditing(null)
@@ -96,6 +107,21 @@ export function BudgetsPage() {
         </p>
       </section>
 
+      {suggestions.length > 0 && (
+        <button
+          className="autobudget-banner rise"
+          style={{ animationDelay: '40ms' }}
+          onClick={() => { haptic('tap'); setAutoOpen(true) }}
+        >
+          <span className="autobudget-banner-icon"><Sparkles size={18} /></span>
+          <div className="autobudget-banner-main">
+            <span className="autobudget-banner-title">Auto-budget · {suggestions.length} suggestion{suggestions.length > 1 ? 's' : ''}</span>
+            <span className="autobudget-banner-sub">Des enveloppes calculées sur tes vraies dépenses</span>
+          </div>
+          <ChevronRight size={18} className="autobudget-banner-chevron" />
+        </button>
+      )}
+
       <div className="row-head rise" style={{ animationDelay: '60ms' }}>
         <h2 className="block-title">Enveloppes</h2>
         <Button size="sm" variant="ghost" onClick={openNew}><Plus size={16} /> Ajouter</Button>
@@ -134,6 +160,7 @@ export function BudgetsPage() {
       )}
 
       <BudgetSheet open={sheetOpen} onClose={() => setSheetOpen(false)} editing={editing} available={available} />
+      <AutoBudgetSheet open={autoOpen} onClose={() => setAutoOpen(false)} suggestions={suggestions} categories={categories} />
     </div>
   )
 }
