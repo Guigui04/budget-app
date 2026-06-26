@@ -14,6 +14,7 @@ import type {
   Holding,
   NetWorthSnapshot,
   Quote,
+  SavingsRule,
   Subscription,
   Transaction,
 } from '@/types'
@@ -28,6 +29,7 @@ import {
   demoHoldings,
   demoNetWorthSnapshots,
   demoQuote,
+  demoSavingsRules,
   demoSubscriptions,
   demoTransactions,
 } from './demo'
@@ -45,6 +47,7 @@ interface DemoState {
   rules: CategorizationRule[]
   holdings: Holding[]
   netWorthSnapshots: NetWorthSnapshot[]
+  savingsRules: SavingsRule[]
 }
 
 const state: DemoState = {
@@ -60,6 +63,7 @@ const state: DemoState = {
   rules: [],
   holdings: demoHoldings,
   netWorthSnapshots: demoNetWorthSnapshots,
+  savingsRules: demoSavingsRules,
 }
 
 export const demoStore = {
@@ -166,6 +170,25 @@ export const demoStore = {
 
   deleteHolding(holdingId: string): void {
     state.holdings = state.holdings.filter((h) => h.id !== holdingId)
+  },
+
+  upsertSavingsRule(rule: Omit<SavingsRule, 'id' | 'householdId' | 'createdAt'> & { id?: string }): void {
+    if (rule.id) {
+      state.savingsRules = state.savingsRules.map((r) => (r.id === rule.id ? ({ ...r, ...rule } as SavingsRule) : r))
+    } else {
+      state.savingsRules = [
+        ...state.savingsRules,
+        { ...rule, id: `sr-${Date.now()}`, householdId: 'hh-foyer', createdAt: new Date().toISOString() } as SavingsRule,
+      ]
+    }
+  },
+
+  toggleSavingsRule(ruleId: string, enabled: boolean): void {
+    state.savingsRules = state.savingsRules.map((r) => (r.id === ruleId ? { ...r, enabled } : r))
+  },
+
+  deleteSavingsRule(ruleId: string): void {
+    state.savingsRules = state.savingsRules.filter((r) => r.id !== ruleId)
   },
 
   /** Cours simulés (déterministes) pour les symboles demandés. */

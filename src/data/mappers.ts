@@ -15,6 +15,8 @@ import type {
   HoldingKind,
   NetWorthSnapshot,
   Quote,
+  SavingsRule,
+  SavingsRuleType,
   Subscription,
   SubscriptionFrequency,
   Transaction,
@@ -92,6 +94,22 @@ export const mapGoal = (r: Row): Goal => ({
   targetDate: asNullableString(r.target_date),
   linkedAccountId: asNullableString(r.linked_account_id),
   color: asString(r.color, '#46c79a'),
+})
+
+const asNullableNumber = (v: unknown): number | null => (v == null ? null : Number(v))
+
+export const mapSavingsRule = (r: Row): SavingsRule => ({
+  id: asString(r.id),
+  householdId: asString(r.household_id),
+  type: asString(r.type, 'roundup') as SavingsRuleType,
+  enabled: r.enabled !== false,
+  roundTo: asNullableNumber(r.round_to),
+  multiplier: asNullableNumber(r.multiplier),
+  percent: asNullableNumber(r.percent),
+  categoryId: asNullableString(r.category_id),
+  amount: asNullableNumber(r.amount),
+  targetGoalId: asNullableString(r.target_goal_id),
+  createdAt: asString(r.created_at),
 })
 
 export const mapGoalContribution = (r: Row): GoalContribution => ({
