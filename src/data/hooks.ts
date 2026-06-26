@@ -29,6 +29,7 @@ import {
   mapGoalContribution,
   mapHolding,
   mapNetWorthSnapshot,
+  mapSavingsRule,
   mapSubscription,
   mapTransaction,
   type Row,
@@ -44,6 +45,7 @@ import type {
   Holding,
   NetWorthSnapshot,
   Quote,
+  SavingsRule,
   Subscription,
   Transaction,
 } from '@/types'
@@ -78,6 +80,7 @@ export const keys = {
   connections: ['connections'] as const,
   holdings: ['holdings'] as const,
   networth: ['networth'] as const,
+  savingsRules: ['savings_rules'] as const,
 }
 
 const bankSyncKeys = [
@@ -142,6 +145,15 @@ export function useHoldings() {
     queryKey: keys.holdings,
     queryFn: async (): Promise<Holding[]> =>
       live ? select('investment_holdings', mapHolding) : demoStore.snapshot().holdings,
+  })
+}
+
+/** Règles d'épargne automatique du foyer. */
+export function useSavingsRules() {
+  return useQuery({
+    queryKey: keys.savingsRules,
+    queryFn: async (): Promise<SavingsRule[]> =>
+      live ? select('savings_rules', mapSavingsRule, 'created_at') : demoStore.snapshot().savingsRules,
   })
 }
 
@@ -390,6 +402,64 @@ export function useDeleteHolding() {
       }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.holdings }),
+  })
+}
+
+export type SavingsRuleInput = Omit<SavingsRule, 'householdId' | 'createdAt' | 'id'> & { id?: string }
+
+export function useSaveSavingsRule() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (rule: SavingsRuleInput) => {
+      if (live) {
+        const { error } = await supabase!.from('savings_rules').upsert({
+          id: rule.id,
+          household_id: requireHouseholdId(),
+          type: rule.type,
+          enabled: rule.enabled,
+          round_to: rule.roundTo,
+          multiplier: rule.multiplier,
+          percent: rule.percent,
+          category_id: rule.categoryId,
+          amount: rule.amount,
+          target_goal_id: rule.targetGoalId,
+        })
+        if (error) throw new Error(error.message)
+      } else {
+        demoStore.upsertSavingsRule(rule)
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.savingsRules }),
+  })
+}
+
+export function useToggleSavingsRule() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, enabled }: { id: string; enabled: boolean }) => {
+      if (live) {
+        const { error } = await supabase!.from('savings_rules').update({ enabled }).eq('id', id)
+        if (error) throw new Error(error.message)
+      } else {
+        demoStore.toggleSavingsRule(id, enabled)
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.savingsRules }),
+  })
+}
+
+export function useDeleteSavingsRule() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (ruleId: string) => {
+      if (live) {
+        const { error } = await supabase!.from('savings_rules').delete().eq('id', ruleId)
+        if (error) throw new Error(error.message)
+      } else {
+        demoStore.deleteSavingsRule(ruleId)
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.savingsRules }),
   })
 }
 
