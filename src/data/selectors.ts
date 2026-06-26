@@ -999,3 +999,140 @@ export function computeSavingsPlan(
 
   return { results, totalThisMonth: Math.round(totalThisMonth * 100) / 100 }
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// Score de santé financière
+// Score composite 0-100 = moyenne pondérée de dimensions d'hygiène budgétaire,
+// 100 % déterministes sur les données existantes. Aucune dimension n'est un
+// conseil en investissement (on reste hors-CIF) : on mesure, on n'oriente pas
+// vers un placement. Une dimension non évaluable (pas de budgets, revenu
+// inconnu…) est ignorée et son poids redistribué sur les autres.
+// ─────────────────────────────────────────────────────────────────────────
+
+export type HealthGrade = 'excellent' | 'good' | 'fair' | 'fragile'
+export type HealthComponentKey = 'savings' | 'emergency' | 'budget' | 'subscriptions'
+
+export interface HealthComponent {
+  key: HealthComponentKey
+  /** Score 0-100 de la dimension, ou null si non évaluable. */
+  score: number | null
+  /** Poids relatif dans le score global. */
+  weight: number
+  /** Valeur brute (sens selon la dimension : taux, mois, taux de respect…). */
+  value: number | null
+}
+
+export interface FinancialHealth {
+  /** Score global 0-100 (moyenne pondérée des dimensions évaluées), null si aucune. */
+  score: number | null
+  grade: HealthGrade | null
+  components: HealthComponent[]
+  /** Nombre de dimensions réellement évaluées. */
+  evaluatedCount: number
+}
+
+/** Moyenne mensuelle des revenus/dépenses sur les `lookback` mois pleins précédents. */
+function recentMonthlyAvg(txns: Transaction[], ref: Date, lookback = 3): { income: number; expense: number } {
+  let incomeSum = 0
+  let expenseSum = 0
+  let counted = 0
+  const base = startOfMonth(ref)
+  for (let i = 1; i <= lookback; i++) {
+    const m = monthOffset(base, -i)
+    const inc = monthIncome(txns, m)
+    const exp = monthSpending(txns, m)
+    if (inc > 0 || exp > 0) {
+      incomeSum += inc
+      expenseSum += exp
+      counted++
+    }
+  }
+  // Pas d'historique complet : on retombe sur le mois courant (partiel).
+  if (counted === 0) {
+    return { income: monthIncome(txns, ref), expense: monthSpending(txns, ref) }
+  }
+  return { income: incomeSum / counted, expense: expenseSum / counted }
+}
+
+function clampScore(x: number): number {
+  return Math.max(0, Math.min(100, x))
+}
+
+/** value ≤ zeroAt → 0 ; value ≥ fullAt → 100 ; linéaire entre. Gère fullAt < zeroAt (sens décroissant). */
+function scoreLinear(value: number, zeroAt: number, fullAt: number): number {
+  if (fullAt === zeroAt) return value >= fullAt ? 100 : 0
+  return clampScore(((value - zeroAt) / (fullAt - zeroAt)) * 100)
+}
+
+function gradeFor(score: number): HealthGrade {
+  if (score >= 80) return 'excellent'
+  if (score >= 60) return 'good'
+  if (score >= 40) return 'fair'
+  return 'fragile'
+}
+
+export function financialHealth(
+  accounts: Account[],
+  transactions: Transaction[],
+  budgets: Budget[],
+  categories: Category[],
+  subscriptions: Subscription[],
+  monthlyIncome: number,
+  ref = new Date(),
+): FinancialHealth {
+  const { income: avgIncome, expense: avgExpense } = recentMonthlyAvg(transactions, ref)
+  // Revenu de référence : moyenne réelle, sinon revenu déclaré du foyer.
+  const income = avgIncome > 0 ? avgIncome : monthlyIncome
+
+  const components: HealthComponent[] = []
+
+  // 1. Taux d'épargne — (revenu − dépenses) / revenu. Cible ~20 %.
+  if (income > 0) {
+    const rate = (income - avgExpense) / income
+    components.push({ key: 'savings', score: scoreLinear(rate, 0, 0.2), weight: 0.3, value: rate })
+  } else {
+    components.push({ key: 'savings', score: null, weight: 0.3, value: null })
+  }
+
+  // 2. Fonds d'urgence — mois de dépenses couverts par les liquidités. Cible 6 mois.
+  if (avgExpense > 0) {
+    const months = totalBalance(accounts) / avgExpense
+    components.push({ key: 'emergency', score: scoreLinear(months, 0, 6), weight: 0.3, value: months })
+  } else {
+    components.push({ key: 'emergency', score: null, weight: 0.3, value: null })
+  }
+
+  // 3. Maîtrise du budget — part des enveloppes non dépassées (en montant).
+  const envelopes = buildEnvelopes(budgets, categories, transactions, ref)
+  if (envelopes.length > 0) {
+    const totalBudget = envelopes.reduce((s, e) => s + e.budget.amount, 0)
+    const overspend = envelopes.reduce((s, e) => s + Math.max(0, e.spent - e.budget.amount), 0)
+    const adherence = totalBudget > 0 ? 1 - overspend / totalBudget : 1
+    components.push({ key: 'budget', score: clampScore(adherence * 100), weight: 0.2, value: adherence })
+  } else {
+    components.push({ key: 'budget', score: null, weight: 0.2, value: null })
+  }
+
+  // 4. Poids des abonnements — coût mensuel des abonnements / revenu (plus bas = mieux).
+  const subsCost = activeSubscriptionsMonthlyCost(subscriptions)
+  if (income > 0 && subsCost > 0) {
+    const ratio = subsCost / income
+    components.push({ key: 'subscriptions', score: scoreLinear(ratio, 0.15, 0), weight: 0.2, value: ratio })
+  } else {
+    components.push({ key: 'subscriptions', score: null, weight: 0.2, value: null })
+  }
+
+  const evaluated = components.filter((c) => c.score !== null)
+  const totalWeight = evaluated.reduce((s, c) => s + c.weight, 0)
+  const score =
+    totalWeight > 0
+      ? Math.round(evaluated.reduce((s, c) => s + (c.score as number) * c.weight, 0) / totalWeight)
+      : null
+
+  return {
+    score,
+    grade: score === null ? null : gradeFor(score),
+    components,
+    evaluatedCount: evaluated.length,
+  }
+}

@@ -3671,3 +3671,160 @@
   border-radius: 2px;
   will-change: transform, opacity;
 }
+
+/* ════════════════════════════════════════════════════════════
+   Score de santé financière
+   ════════════════════════════════════════════════════════════ */
+.health-card {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  width: 100%;
+  text-align: left;
+}
+
+.health-card-main { flex: 1; min-width: 0; }
+
+.health-card-grade {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  margin-top: 1px;
+}
+
+.health-card-blurb {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.health-card-chevron { flex-shrink: 0; color: var(--text-faint); }
+
+/* Jauge */
+.health-gauge {
+  position: relative;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+}
+
+.health-gauge-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+
+.health-gauge-value {
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.health-gauge-max {
+  color: var(--text-faint);
+  font-size: 0.66rem;
+  font-weight: 800;
+  margin-top: 1px;
+}
+
+/* Fiche détail */
+.health-sheet-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: var(--sp-5);
+  text-align: center;
+}
+
+.health-sheet-grade {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 900;
+  margin-top: var(--sp-2);
+}
+
+.health-sheet-blurb {
+  max-width: 300px;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.health-sheet-count {
+  margin-top: 4px;
+  color: var(--text-faint);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.health-dims {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.health-dim {
+  display: flex;
+  gap: var(--sp-3);
+}
+.health-dim.is-muted { opacity: 0.55; }
+
+.health-dim-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--accent-text);
+}
+
+.health-dim-main { flex: 1; min-width: 0; }
+
+.health-dim-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-bottom: 6px;
+}
+
+.health-dim-label { font-weight: 800; font-size: 0.9rem; }
+
+.health-dim-value { font-weight: 900; color: var(--text-muted); font-size: 0.84rem; }
+
+.health-dim-hint,
+.health-dim-tip {
+  display: block;
+  margin-top: 5px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.health-dim-hint { color: var(--text-faint); }
+.health-dim-tip { color: var(--accent-text); }
+
+.health-disclaimer {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: var(--sp-5);
+  color: var(--text-faint);
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.health-disclaimer svg { flex-shrink: 0; margin-top: 2px; }
